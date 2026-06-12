@@ -1,0 +1,29 @@
+{
+  "name": "golemui-react-template",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "start": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@golemui/core": "0.17.0",
+    "@golemui/gui-react": "0.17.0",
+    "@golemui/gui-shared": "0.17.0",
+    "@golemui/react": "0.17.0",
+    "chart.js": "^4.5.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "puppeteer-core": "^25.1.0",
+    "typescript": "~5.6.3",
+    "vite": "^6.0.5"
+  }
+}
