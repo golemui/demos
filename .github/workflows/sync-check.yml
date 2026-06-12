@@ -1,0 +1,27 @@
+name: shared-sync-check
+
+# Guarantees the committed src/_shared/ copies match /shared. Because StackBlitz
+# serves demos straight from the repo, stale shared code must never reach main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Regenerate shared files
+        run: node scripts/sync-shared.mjs
+      - name: Fail if src/_shared is out of date
+        run: |
+          if ! git diff --quiet -- '*/src/_shared'; then
+            echo "::error::src/_shared is out of date. Run 'npm run sync' and commit the result."
+            git --no-pager diff -- '*/src/_shared'
+            exit 1
+          fi
+          echo "src/_shared is up to date."

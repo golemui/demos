@@ -1,0 +1,386 @@
+:root {
+  /* Map the demo's local palette onto GolemUI semantic tokens so the whole
+     checkout follows the active theme (light / dark / auto) automatically. */
+  --surface: var(--gui-bg-surface);
+  --ink: var(--gui-text-default);
+  --ink-soft: var(--gui-text-secondary);
+  --line: var(--gui-border-default);
+  --line-strong: var(--gui-border-strong, var(--gui-border-default));
+  --brand: var(--gui-intent-primary);
+  --brand-press: var(--gui-intent-primary-hover);
+  --danger: var(--gui-intent-error);
+  --field-bg: var(--gui-bg-default);
+  --radius: 16px;
+  --shadow: 0 24px 60px -24px rgba(16, 24, 64, 0.45);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+}
+
+/* ----- layout (the page chrome is owned by DemoShell) ----- */
+.checkout {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.checkout__card {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px;
+  overflow: hidden;
+}
+
+.checkout__stage { display: block; }
+
+.checkout__footnote {
+  margin: 16px 4px 0;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--gui-text-muted);
+  line-height: 1.5;
+}
+
+/* ----- the GolemUI form lays out as a vertical stack ----- */
+.checkout__stage form,
+.checkout__stage > div {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ----- fields ----- */
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.field__label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.field__control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--field-bg);
+  border: 1.5px solid var(--line);
+  border-radius: 11px;
+  padding: 0 12px;
+  height: 46px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.field__control:focus-within {
+  border-color: var(--brand);
+  background: var(--surface);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 16%, transparent);
+}
+
+.field__control--error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 4px rgba(229, 72, 77, 0.12);
+}
+
+.field__icon { color: var(--gui-text-muted); font-size: 19px; }
+
+.field__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+
+.field__input::placeholder { color: var(--gui-text-muted); letter-spacing: 0.06em; }
+
+.field__brand { display: flex; align-items: center; height: 20px; }
+
+.field__error { font-size: 12px; color: var(--danger); font-weight: 500; }
+
+.brandmark { height: 18px; width: auto; display: block; }
+
+/* ----- pay button (GolemUI built-in button) -----
+   Selectors are scoped to `.gui-button button.gui-button` so they out-specify
+   GolemUI's own `.gui-form button.gui-button` defaults — otherwise the button
+   keeps its default (content-width) sizing and drifts left in the wrapper. */
+.checkout__stage .gui-button button.gui-button {
+  position: relative;
+  width: 100%;
+  margin-top: 4px;
+  min-height: 50px;
+  border: none;
+  border-radius: 12px;
+  background: var(--brand);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 10px 24px -10px rgba(99, 91, 255, 0.8);
+}
+
+.checkout__stage .gui-button button.gui-button:hover:not(:disabled) { background: var(--brand-press); }
+.checkout__stage .gui-button button.gui-button:active:not(:disabled) { transform: translateY(1px); }
+
+.checkout__stage .gui-button button.gui-button:disabled {
+  background: var(--gui-bg-disabled, #c7cbe0);
+  color: var(--gui-text-disabled, #fff);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+/* GolemUI ships no icon font: it renders <span class="gui-widget-icon"
+   data-icon="lock"> and leaves glyph rendering to the app. Map data-icon onto
+   the Material Icons font already loaded in index.html (ligature-based). */
+.checkout .gui-widget-icon[data-icon]::before {
+  font-family: 'Material Icons';
+  content: attr(data-icon);
+  font-size: 18px;
+  line-height: 1;
+  font-weight: normal;
+}
+
+/* Keep the button's icon readable on the indigo background and let the label
+   stay centered (GolemUI positions the icon absolutely on the side). */
+.checkout__stage .gui-button button.gui-button .gui-widget-icon {
+  color: #fff;
+}
+
+/* ===========================================================
+   CARD PREVIEW
+   =========================================================== */
+.cardpreview {
+  margin-bottom: 6px;
+  perspective: 1400px;
+}
+
+.card {
+  width: 100%;
+  aspect-ratio: 1.586 / 1; /* ISO/IEC 7810 ID-1 */
+  position: relative;
+}
+
+.card__inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.card__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 18px 40px -16px rgba(8, 12, 30, 0.7);
+  background-size: cover;
+}
+
+.card__face--front {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+}
+
+.card__face--back { transform: rotateY(180deg); }
+
+.card__sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(125deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 38%);
+  pointer-events: none;
+}
+
+.card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card__chip {
+  width: 44px;
+  height: 33px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #f7d77b 0%, #e0b04a 50%, #f7d77b 100%);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12);
+  position: relative;
+}
+.card__chip::after {
+  content: '';
+  position: absolute;
+  inset: 6px 10px;
+  border: 1px solid rgba(120, 84, 12, 0.5);
+  border-radius: 3px;
+}
+
+.card__brand { height: 26px; display: flex; align-items: center; }
+.card__brand .brandmark { height: 24px; }
+.card__brand--back {
+  position: absolute;
+  bottom: 16px;
+  right: 18px;
+  height: 22px;
+}
+
+.card__number {
+  margin-top: auto;
+  font-size: clamp(18px, 5.4vw, 23px);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  padding-bottom: 14px;
+}
+
+.card__bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card__caption {
+  display: block;
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 3px;
+}
+
+.card__value {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card__holder { min-width: 0; flex: 1; }
+.card__frontcode { text-align: right; }
+
+/* back */
+.card__magstripe {
+  position: absolute;
+  top: 22px;
+  left: 0;
+  right: 0;
+  height: 42px;
+  background: #1b1b1f;
+}
+
+.card__signature {
+  position: absolute;
+  top: 82px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.card__signature-band {
+  flex: 1;
+  height: 34px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(
+    -50deg,
+    #f4f4f4 0 8px,
+    #e7e7ea 8px 16px
+  );
+}
+
+.card__cvv {
+  min-width: 56px;
+  height: 34px;
+  margin-left: 8px;
+  border-radius: 4px;
+  background: #fff;
+  color: #1a1a1a;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.card__code-label {
+  position: absolute;
+  top: 122px;
+  right: 18px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+/* ===========================================================
+   PAYMENT SUCCESS
+   =========================================================== */
+.success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 26px 10px 14px;
+}
+
+.success__badge { margin-bottom: 18px; }
+
+.success__ring {
+  fill: none;
+  stroke: #29b46e;
+  stroke-width: 5;
+  opacity: 0.28;
+}
+
+.success__check {
+  stroke: #1aa45a;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.success__title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.success__amount { margin: 0 0 20px; color: var(--ink-soft); font-size: 14px; }
+
+.success__reset {
+  border: 1.5px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 20px;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.success__reset:hover { background: var(--gui-bg-surface-hover); border-color: var(--brand); }

@@ -1,0 +1,11 @@
+{
+  "name": "golemui-demos",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "A collection of GolemUI demos, each runnable independently in StackBlitz.",
+  "scripts": {
+    "sync": "node scripts/sync-shared.mjs",
+    "prepare": "git config core.hooksPath .githooks"
+  }
+}

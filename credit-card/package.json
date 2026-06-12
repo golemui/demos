@@ -1,0 +1,29 @@
+{
+  "name": "golemui-credit-card-demo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "start": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@golemui/core": "0.17.0",
+    "@golemui/react": "0.17.0",
+    "@golemui/gui-react": "0.17.0",
+    "@golemui/gui-shared": "0.17.0",
+    "card-validator": "^10.0.0",
+    "gsap": "^3.12.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "~5.6.3",
+    "vite": "^6.0.5"
+  }
+}

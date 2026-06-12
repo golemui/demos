@@ -1,0 +1,131 @@
+/* Shared demo chrome. Uses only GolemUI semantic tokens (--gui-*) so the
+   header and page track the active theme (light / dark / auto) automatically. */
+
+/* Paint the page background on the root element (html) so it always covers the
+   full canvas — including overscroll and any area below short content. Painting
+   only <body> (or relying on a min-height container) leaves the root canvas
+   showing through as a second color at the bottom. This is the single source of
+   the page background for every demo; demos must not set their own.
+
+   `display: flow-root` makes <html> a block formatting context so descendant
+   margins can't collapse out to the root and offset the painted background — the
+   classic cause of a stray strip of a second color at the page edge. It's the
+   zero-height equivalent of the `border: 1px` trick (a border adds 2px to the
+   100vh layout and forces a scrollbar; flow-root does not). */
+html, body {
+  display: flow-root;
+  background: var(--gui-bg-default);
+  color: var(--gui-text-default);
+}
+
+/* Let native UI (scrollbar, overscroll canvas, form controls) follow the theme
+   selected via data-theme on <html>. */
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+[data-theme='light'] {
+  color-scheme: light;
+}
+[data-theme='auto'] {
+  color-scheme: light dark;
+}
+
+.demo-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--gui-bg-default);
+  color: var(--gui-text-default);
+  font-family: var(--gui-font-family, system-ui, -apple-system, sans-serif);
+}
+
+/* ---- Header ---- */
+.demo-shell__header {
+  display: flex;
+  align-items: center;
+  gap: var(--gui-space-4, 16px);
+  padding: var(--gui-space-4, 16px) var(--gui-space-6, 24px);
+  background: var(--gui-bg-surface);
+  border-bottom: 1px solid var(--gui-border-default);
+}
+
+.demo-shell__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gui-space-3, 12px);
+  text-decoration: none;
+  color: var(--gui-text-default);
+}
+
+/* The `gui.` glyph inherits this color via currentColor. */
+.demo-shell__logo {
+  height: 30px;
+  width: auto;
+  display: block;
+  color: var(--gui-text-default);
+}
+
+.demo-shell__brand-title {
+  font-weight: 600;
+  font-size: var(--gui-font-base, 1rem);
+  white-space: nowrap;
+}
+
+.demo-shell__demo-name {
+  padding-left: var(--gui-space-4, 16px);
+  border-left: 1px solid var(--gui-border-default);
+  color: var(--gui-text-secondary);
+  font-size: var(--gui-font-sm, 0.875rem);
+  white-space: nowrap;
+}
+
+/* ---- Theme toggle (pushed to the right) ---- */
+.demo-shell__toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gui-space-2, 8px);
+  height: 38px;
+  padding: 0 var(--gui-space-3, 12px);
+  background: var(--gui-bg-default);
+  color: var(--gui-text-default);
+  border: 1px solid var(--gui-border-default);
+  border-radius: var(--gui-radius-md, 8px);
+  font: inherit;
+  font-size: var(--gui-font-sm, 0.875rem);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.demo-shell__toggle:hover {
+  background: var(--gui-bg-surface-hover);
+  border-color: var(--gui-border-strong, var(--gui-border-default));
+}
+
+.demo-shell__toggle .material-icons {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.demo-shell__toggle-label {
+  text-transform: capitalize;
+}
+
+/* ---- Main container (identical width for every demo) ---- */
+.demo-shell__main {
+  flex: 1;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--gui-space-8, 32px) var(--gui-space-5, 20px);
+}
+
+/* ---- Small screens: keep the logo, drop the long product line ---- */
+@media (max-width: 640px) {
+  .demo-shell__brand-title {
+    display: none;
+  }
+  .demo-shell__toggle-label {
+    display: none;
+  }
+}

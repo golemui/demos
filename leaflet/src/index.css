@@ -1,0 +1,162 @@
+:root {
+  /* Map our local names onto GolemUI semantic tokens so everything follows the
+     active theme (light / dark / auto) with no extra work. */
+  --panel-bg: var(--gui-bg-surface, #fff);
+  --panel-bg-hover: var(--gui-bg-surface-hover, #f1f5f9);
+  --panel-border: var(--gui-border-default, #e2e6ea);
+  --accent: var(--gui-intent-primary, #2563eb);
+  --text: var(--gui-text-default, #1c2430);
+  --text-2: var(--gui-text-secondary, #475569);
+  --text-muted: var(--gui-text-muted, #64748b);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  /* Page background is owned by the shared shell (html). */
+  color: var(--text);
+}
+
+/* The page container is owned by DemoShell. */
+.demo-shell__main .gui-grid,
+.demo-shell__main [class*="gui-grid"] { align-items: start; }
+
+/* ---- Address autocomplete widget ---- */
+.addr { position: relative; width: 100%; }
+
+.addr__field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.addr__field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.addr__icon { color: var(--accent); font-size: 20px; }
+.addr__input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  color: var(--text);
+}
+.addr__input::placeholder { color: var(--text-muted); }
+.addr__spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--panel-border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: addr-spin .7s linear infinite;
+}
+@keyframes addr-spin { to { transform: rotate(360deg); } }
+
+.addr__list {
+  position: absolute;
+  z-index: 1200;
+  top: calc(100% + 6px);
+  left: 0; right: 0;
+  margin: 0; padding: 6px;
+  list-style: none;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .35);
+  max-height: 280px;
+  overflow-y: auto;
+}
+.addr__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--text);
+}
+.addr__item:hover,
+.addr__item[aria-selected="true"] { background: var(--panel-bg-hover); }
+.addr__item-icon { color: var(--accent); font-size: 18px; flex: none; }
+
+/* ---- Map widget ---- */
+.routemap { position: relative; width: 100%; }
+.routemap__canvas {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+}
+.routemap__summary {
+  position: absolute;
+  z-index: 1000;
+  left: 12px; bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+  font-size: 14px;
+}
+.routemap__summary .material-icons { font-size: 18px; color: var(--accent); }
+.routemap__sep { opacity: .4; }
+.routemap__hint {
+  position: absolute;
+  z-index: 1000;
+  inset: auto 0 16px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* Numbered pin + route line */
+.route-pin span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 30px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .45);
+}
+.leaflet-div-icon { background: transparent; border: none; }
+.route-line { color: var(--accent); }
+
+/* ---- Markdown summary (custom display widget) ---- */
+.summary { width: 100%; }
+.summary__body {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .12);
+}
+.summary__body h1 { font-size: 22px; margin: 0 0 6px; color: var(--text); }
+.summary__body h2 { font-size: 16px; margin: 14px 0 8px; color: var(--text); }
+.summary__body p { margin: 6px 0; color: var(--text-2); }
+.summary__body ol { margin: 8px 0; padding-left: 20px; }
+.summary__body li { margin: 3px 0; }
+.summary__body hr { border: none; border-top: 1px solid var(--panel-border); margin: 14px 0; }
+.summary__body strong { color: var(--text); }

@@ -1,0 +1,9 @@
+#!/bin/sh
+# Keep each demo's src/_shared/ in sync with /shared before every commit, so the
+# generated copies land in the same commit as the source change (and the CI
+# sync-check always passes). Wired via `git config core.hooksPath .githooks`,
+# which the root `npm install` sets up through the package.json "prepare" script.
+set -e
+
+node scripts/sync-shared.mjs
+git add credit-card/src/_shared leaflet/src/_shared temperature-chart/src/_shared
