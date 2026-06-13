@@ -25,7 +25,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = join(ROOT, 'shared');
-const DEMOS = ['credit-card', 'leaflet', 'temperature-chart'];
+const DEMOS = ['credit-card', 'leaflet', 'temperature-chart', 'openapi-petstore'];
 const DEST_SUBDIR = join('src', '_shared');
 
 const banner = (file) =>

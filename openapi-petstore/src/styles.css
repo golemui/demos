@@ -1,0 +1,378 @@
+body {
+  /* Page background/color is owned by the shared shell (html). */
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
+
+.demo-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: var(--gui-text-secondary, #94a3b8);
+  margin-top: 0;
+  max-width: 70ch;
+  line-height: 1.5;
+}
+
+.subtitle a {
+  color: var(--gui-primary, #8b5cf6);
+}
+
+/* ---- Endpoint picker ---- */
+.pg-header {
+  margin-bottom: 24px;
+}
+
+.pg-endpoint-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.pg-select {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  font-family: inherit;
+  color: var(--gui-text-default);
+  background: var(--gui-bg-surface, #1e293b);
+  border: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.3));
+  border-radius: 10px;
+}
+
+/* HTTP method badge — colored per verb. */
+.pg-badge {
+  flex: none;
+  padding: 6px 10px;
+  font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 8px;
+  color: #fff;
+}
+.pg-badge--get {
+  background: #2563eb;
+}
+.pg-badge--post {
+  background: #16a34a;
+}
+.pg-badge--put {
+  background: #d97706;
+}
+.pg-badge--delete {
+  background: #dc2626;
+}
+
+/* ---- HTTP fetch status line ---- */
+.pg-fetch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 0.78rem;
+  border: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.3));
+  border-radius: 8px;
+  background: var(--gui-bg-subtle, rgba(148, 163, 184, 0.06));
+  color: var(--gui-text-secondary, #94a3b8);
+}
+.pg-fetch__verb {
+  font-weight: 700;
+  color: var(--gui-text-default, #e2e8f0);
+}
+.pg-fetch__url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pg-fetch__status {
+  font-weight: 600;
+}
+.pg-fetch--ready .pg-fetch__icon,
+.pg-fetch--ready .pg-fetch__status {
+  color: #34d399;
+}
+.pg-fetch--error .pg-fetch__icon,
+.pg-fetch--error .pg-fetch__status {
+  color: #f87171;
+}
+.pg-fetch__icon {
+  font-size: 16px;
+}
+
+/* ---- Loading states / spinner ---- */
+.pg-spinner {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border: 2px solid var(--gui-border-default, rgba(148, 163, 184, 0.4));
+  border-top-color: var(--gui-primary, #8b5cf6);
+  border-radius: 999px;
+  animation: pg-spin 0.7s linear infinite;
+}
+.pg-spinner--lg {
+  width: 26px;
+  height: 26px;
+  border-width: 3px;
+}
+@keyframes pg-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pg-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 280px;
+  color: var(--gui-text-secondary, #94a3b8);
+  font-size: 0.9rem;
+}
+.pg-loading--code {
+  flex-direction: row;
+  min-height: 320px;
+}
+.pg-loading--error {
+  color: #f87171;
+}
+.pg-loading--error .material-icons {
+  font-size: 28px;
+}
+
+/* ---- Two-column layout: source (spec/JSON) ↔ rendered form ---- */
+.pg-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .pg-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pg-panel {
+  border: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.3));
+  border-radius: 12px;
+  background: var(--gui-bg-surface, #0f172a);
+  overflow: hidden;
+}
+
+.pg-rendered {
+  padding: 20px;
+}
+
+/* ---- Source tabs ---- */
+.pg-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.25));
+  background: var(--gui-bg-subtle, rgba(148, 163, 184, 0.06));
+}
+
+.pg-tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 12px 18px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--gui-text-secondary, #94a3b8);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.pg-tab--active {
+  color: var(--gui-text-default, #e2e8f0);
+  border-bottom-color: var(--gui-primary, #8b5cf6);
+}
+
+/* ---- Code blocks (spec + payload) ---- */
+.pg-code {
+  margin: 0;
+  padding: 16px;
+  font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--gui-text-default, #e2e8f0);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+.pg-spec {
+  min-height: 320px;
+}
+
+/* ---- Editable Form JSON ---- */
+.pg-json-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.pg-json {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 320px;
+  resize: vertical;
+  border: none;
+  padding: 16px;
+  font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--gui-text-default, #e2e8f0);
+  background: transparent;
+  tab-size: 2;
+}
+.pg-json:focus {
+  outline: 2px solid var(--gui-primary, #8b5cf6);
+  outline-offset: -2px;
+}
+
+.pg-json-hint,
+.pg-json-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 16px;
+  font-size: 0.78rem;
+  border-top: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.25));
+}
+.pg-json-hint {
+  color: var(--gui-text-secondary, #94a3b8);
+}
+.pg-json-error {
+  color: #fca5a5;
+  background: rgba(220, 38, 38, 0.1);
+}
+.pg-json-error .material-icons {
+  font-size: 18px;
+}
+
+/* ---- Live request preview (custom widget injected into the form) ---- */
+.request-preview {
+  margin-top: 20px;
+  border: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.3));
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--gui-bg-subtle, #0f172a);
+}
+
+.request-preview__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.25));
+  background: color-mix(in srgb, var(--gui-bg-subtle, #0f172a) 80%, #6366f1 20%);
+}
+.request-preview__bar--curl {
+  border-top: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.25));
+}
+
+.request-preview__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #34d399;
+}
+.request-preview__dot[data-method='get'] {
+  background: #60a5fa;
+}
+
+.request-preview__endpoint {
+  font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gui-text-default, #e2e8f0);
+  word-break: break-all;
+}
+
+.request-preview__label {
+  font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gui-text-secondary, #94a3b8);
+}
+
+.request-preview__code {
+  margin: 0;
+  padding: 14px 16px;
+  font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--gui-text-default, #e2e8f0);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.request-preview__code--curl {
+  color: var(--gui-text-secondary, #94a3b8);
+}
+
+.request-preview__comment {
+  color: var(--gui-text-secondary, #94a3b8);
+  font-style: italic;
+}
+
+/* ---- Captured payload ---- */
+.pg-payload {
+  margin-top: 24px;
+}
+
+.pg-payload__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.25));
+  background: var(--gui-bg-subtle, rgba(148, 163, 184, 0.06));
+}
+.pg-payload__bar .material-icons {
+  font-size: 20px;
+  color: var(--gui-primary, #8b5cf6);
+}
+.pg-payload__hint {
+  font-weight: 400;
+  color: var(--gui-text-secondary, #94a3b8);
+}
+
+.pg-payload__empty {
+  margin: 0;
+  padding: 20px 16px;
+  color: var(--gui-text-secondary, #94a3b8);
+  font-size: 0.88rem;
+}
+
+.pg-payload__code {
+  background: var(--gui-bg-subtle, #0f172a);
+}
+
+/* Material icon glyphs for GolemUI widgets that use them. */
+.gui-widget-icon[data-icon]::before {
+  content: attr(data-icon);
+  font-family: 'Material Icons';
+  font-size: var(--gui-font-lg);
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+}

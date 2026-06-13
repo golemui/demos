@@ -6,4 +6,4 @@
 set -e
 
 node scripts/sync-shared.mjs
-git add credit-card/src/_shared leaflet/src/_shared temperature-chart/src/_shared
+git add credit-card/src/_shared leaflet/src/_shared temperature-chart/src/_shared openapi-petstore/src/_shared

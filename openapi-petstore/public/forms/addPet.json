@@ -1,0 +1,114 @@
+{
+  "$schema": "https://golemui.com/schemas/form.schema.json",
+  "form": [
+    {
+      "kind": "input",
+      "type": "number",
+      "path": "id",
+      "label": "Id"
+    },
+    {
+      "kind": "input",
+      "type": "textinput",
+      "path": "name",
+      "label": "Name",
+      "validator": {
+        "type": "string",
+        "required": true
+      }
+    },
+    {
+      "kind": "layout",
+      "type": "flex",
+      "props": {
+        "direction": "column",
+        "gap": 8
+      },
+      "children": [
+        {
+          "kind": "input",
+          "type": "number",
+          "path": "category.id",
+          "label": "Id"
+        },
+        {
+          "kind": "input",
+          "type": "textinput",
+          "path": "category.name",
+          "label": "Name"
+        }
+      ]
+    },
+    {
+      "kind": "input",
+      "type": "tags",
+      "path": "photoUrls",
+      "label": "Photo Urls",
+      "validator": {
+        "type": "array",
+        "required": true
+      },
+      "props": {
+        "placeholder": "Add and press Enter"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "repeater",
+      "path": "tags",
+      "label": "Tags",
+      "props": {
+        "addLabel": "Add tag",
+        "removeLabel": "Remove",
+        "template": {
+          "kind": "layout",
+          "type": "flex",
+          "props": {
+            "direction": "column",
+            "gap": 8
+          },
+          "children": [
+            {
+              "kind": "input",
+              "type": "number",
+              "path": "tags.items.id",
+              "label": "Id"
+            },
+            {
+              "kind": "input",
+              "type": "textinput",
+              "path": "tags.items.name",
+              "label": "Name"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "kind": "input",
+      "type": "select",
+      "path": "status",
+      "label": "Status",
+      "validator": {
+        "type": "string",
+        "enum": ["available", "pending", "sold"]
+      },
+      "props": {
+        "options": [
+          { "label": "Available", "value": "available" },
+          { "label": "Pending", "value": "pending" },
+          { "label": "Sold", "value": "sold" }
+        ]
+      }
+    },
+    {
+      "kind": "action",
+      "type": "button",
+      "actionType": "submit",
+      "label": "Add a new pet to the store.",
+      "props": {
+        "variant": "filled"
+      }
+    }
+  ]
+}

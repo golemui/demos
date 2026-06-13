@@ -1,0 +1,61 @@
+{
+  "$schema": "https://golemui.com/schemas/form.schema.json",
+  "form": [
+    {
+      "kind": "input",
+      "type": "number",
+      "path": "id",
+      "label": "Id"
+    },
+    {
+      "kind": "input",
+      "type": "number",
+      "path": "petId",
+      "label": "Pet Id"
+    },
+    {
+      "kind": "input",
+      "type": "number",
+      "path": "quantity",
+      "label": "Quantity"
+    },
+    {
+      "kind": "input",
+      "type": "datePicker",
+      "path": "shipDate",
+      "label": "Ship Date"
+    },
+    {
+      "kind": "input",
+      "type": "select",
+      "path": "status",
+      "label": "Status",
+      "validator": {
+        "type": "string",
+        "enum": ["placed", "approved", "delivered"]
+      },
+      "props": {
+        "options": [
+          { "label": "Placed", "value": "placed" },
+          { "label": "Approved", "value": "approved" },
+          { "label": "Delivered", "value": "delivered" }
+        ]
+      }
+    },
+    {
+      "kind": "input",
+      "type": "checkbox",
+      "path": "complete",
+      "label": "Complete"
+    },
+    {
+      "kind": "action",
+      "type": "button",
+      "actionType": "submit",
+      "label": "Place an order for a pet.",
+      "props": {
+        "variant": "filled"
+      }
+    }
+  ]
+}

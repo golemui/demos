@@ -1,0 +1,32 @@
+{
+  "$schema": "https://golemui.com/schemas/form.schema.json",
+  "form": [
+    {
+      "kind": "input",
+      "type": "select",
+      "path": "status",
+      "label": "Status",
+      "validator": {
+        "type": "string",
+        "required": true,
+        "enum": ["available", "pending", "sold"]
+      },
+      "props": {
+        "options": [
+          { "label": "Available", "value": "available" },
+          { "label": "Pending", "value": "pending" },
+          { "label": "Sold", "value": "sold" }
+        ]
+      }
+    },
+    {
+      "kind": "action",
+      "type": "button",
+      "actionType": "submit",
+      "label": "Finds Pets by status.",
+      "props": {
+        "variant": "filled"
+      }
+    }
+  ]
+}

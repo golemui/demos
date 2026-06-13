@@ -1,0 +1,65 @@
+{
+  "$schema": "https://golemui.com/schemas/form.schema.json",
+  "form": [
+    {
+      "kind": "input",
+      "type": "number",
+      "path": "id",
+      "label": "Id"
+    },
+    {
+      "kind": "input",
+      "type": "textinput",
+      "path": "username",
+      "label": "Username"
+    },
+    {
+      "kind": "input",
+      "type": "textinput",
+      "path": "firstName",
+      "label": "First Name"
+    },
+    {
+      "kind": "input",
+      "type": "textinput",
+      "path": "lastName",
+      "label": "Last Name"
+    },
+    {
+      "kind": "input",
+      "type": "textinput",
+      "path": "email",
+      "label": "Email"
+    },
+    {
+      "kind": "input",
+      "type": "password",
+      "path": "password",
+      "label": "Password"
+    },
+    {
+      "kind": "input",
+      "type": "textinput",
+      "path": "phone",
+      "label": "Phone"
+    },
+    {
+      "kind": "input",
+      "type": "number",
+      "path": "userStatus",
+      "label": "User Status",
+      "props": {
+        "hint": "User Status"
+      }
+    },
+    {
+      "kind": "action",
+      "type": "button",
+      "actionType": "submit",
+      "label": "Create user.",
+      "props": {
+        "variant": "filled"
+      }
+    }
+  ]
+}
