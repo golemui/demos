@@ -1,10 +1,26 @@
-# Addresses → Live Map (GolemUI + Leaflet)
+# Addresses → Live Map
 
-A GolemUI demo: a declarative form where every address you type drops a numbered
-pin on a Leaflet map and, with two or more points, draws the **real driving
-route** (OSRM). Pins are draggable and write their coordinates back to the form.
+> A declarative form that turns a list of addresses into draggable map pins and a real driving route — all from a single source of truth.
 
-## Run
+Add an address and a numbered pin drops on the map. Add a second and GolemUI
+draws the **real driving route** between them (via OSRM). Drag a pin and its new
+coordinates flow straight back into the form. One form state drives everything.
+
+**Built with GolemUI · Leaflet · OSRM · Photon**
+
+## What it shows off
+
+- **Single source of truth** — the entire trip lives under one form path
+  (`trip`); the map writes the route back into the store and the summary updates
+  itself. No cross-widget event plumbing.
+- **Repeaters** — `trip.stops` renders one autocomplete row per stop, with the
+  engine resolving each row's index for you.
+- **Third-party integration** — a custom input widget wraps a full Leaflet map
+  inside the declarative form.
+- **Reactive display widgets** — a summary widget reads `trip` and re-renders
+  live, rendering markdown with marked + DOMPurify.
+
+## Run it
 
 ```bash
 npm install
@@ -13,53 +29,37 @@ npm run dev
 
 `npm run build` runs the typecheck (`tsc -b`) + the production bundle.
 
-## How it's wired
+## How it works
 
-The whole trip lives under a single form path, `trip`:
+The whole trip lives under one form path:
 
 ```ts
 trip = { stops: Stop[]; route: RouteInfo | null }
 ```
 
-- **Repeater** (`trip.stops`) → one row per stop. Each row mounts the custom
-  autocomplete widget.
-- **`addressAutocomplete`** (custom input widget, `src/widgets/AddressAutocomplete.tsx`)
-  bound to `trip.stops.items.place`. It owns its own text input + debounced
-  search against **Photon** (free geocoder, no API key) and, on selection, writes
-  `{ label, lat, lng }` to its path. Because it's an input widget, the engine
-  resolves the per-row index for us.
-- **`routeMap`** (custom input widget, `src/widgets/RouteMap.tsx`) bound to the
-  whole `trip` object. It initializes Leaflet **once**, renders numbered draggable
-  markers, asks **OSRM** for the route, draws it, calls `fitBounds`, and **writes
-  `trip.route` back** into the store (distance, duration, geometry).
-- A reactive **`routeSummary`** custom display widget reads `trip` (including
-  `trip.route`) and re-renders the summary, parsing markdown with **marked +
-  DOMPurify**. (The built-in `markdownText` shortcut isn't handled by the React
-  adapter in this version, so we render markdown in our own display widget.)
+- **`addressAutocomplete`** (`src/widgets/AddressAutocomplete.tsx`) — bound to
+  `trip.stops.items.place`. Owns its text input + debounced search against
+  **Photon** (free geocoder, no API key); on selection writes `{ label, lat,
+  lng }` to its path.
+- **`routeMap`** (`src/widgets/RouteMap.tsx`) — bound to the whole `trip`.
+  Initializes Leaflet once, renders numbered draggable markers, asks **OSRM** for
+  the route, draws it, `fitBounds`, and **writes `trip.route` back** (distance,
+  duration, geometry).
+- **`routeSummary`** — a reactive custom display widget that reads `trip` and
+  re-renders the summary.
 
-One source of truth (`trip`) and everything flows through the store: no
-cross-widget event plumbing. The map writes the route → the summary updates by
-itself.
+**Anti-loop guard:** the OSRM effect writes `trip.route`, which changes `value`.
+To avoid a feedback loop, effects depend on `coordsKey` (a hash of the
+coordinates) — which doesn't change when `route` is written — and handlers read
+the latest `trip` through a ref to dodge stale closures.
 
-### Map anti-loop guards
+### External services
 
-The OSRM effect writes `trip.route`, which changes `value`. To avoid recomputing
-in a loop, the effects depend on `coordsKey` (a hash of the coordinates), which
-does **not** change when `route` is written. Handlers read the latest `trip`
-through a ref to avoid stale closures.
+- Geocoder: [Komoot Photon](https://photon.komoot.io)
+- Routing: [public OSRM](https://router.project-osrm.org)
 
-## External services (free, no key)
+## Learn more
 
-- Geocoder: Komoot Photon — `https://photon.komoot.io`
-- Routing: public OSRM — `https://router.project-osrm.org`
-
-Both are CORS-enabled and free to use. If you host this publicly and worry about
-rate limits, both are self-hostable; just change the URLs in `src/services/`.
-
-## Worth testing in the browser
-
-The build and typecheck pass. What's worth checking by hand (needs rendering):
-
-1. The dual binding `trip` (map) + `trip.stops` (repeater) stays in sync.
-2. Dragging a pin updates the stop and recomputes the route.
-3. Photon/OSRM respond (real calls from the browser).
+- [GolemUI docs](https://golemui.com/dx/getting-started/installation/)
+- [Form definition API](https://golemui.com/dx/form-definition-api/)
+- [Widgets reference](https://golemui.com/dx/widgets-reference/)
