@@ -1,7 +1,9 @@
 import { gui } from '@golemui/gui-shared';
-import type { DxRuntimeParams } from '@golemui/gui-shared';
 import { buildSummary } from './summary';
 import { emptyTrip, type Trip } from './types';
+
+/** Shape of the runtime-function params we read — just the live form data. */
+type RuntimeParams = { $form?: { trip?: Trip } };
 
 /** Two empty stops so the map and repeater have something to show on load. */
 export const initialData = { trip: emptyTrip(2) };
@@ -14,8 +16,8 @@ const header = [
   'Drag any pin to adjust its coordinates.',
 ].join('\n');
 
-const readTrip = (params: DxRuntimeParams): Trip | undefined =>
-  (params?.$form as { trip?: Trip } | undefined)?.trip;
+const readTrip = (params: RuntimeParams): Trip | undefined =>
+  params?.$form?.trip;
 
 export const formDef = [
   gui.displays.custom('routeSummary', { props: { md: header } }, ['intro']),
@@ -50,7 +52,7 @@ export const formDef = [
           // Reactive summary (recomputes on every form recompute).
           gui.displays.custom(
             'routeSummary',
-            (params: DxRuntimeParams) => ({
+            (params: RuntimeParams) => ({
               uid: 'tripSummary',
               props: { md: buildSummary(readTrip(params)) },
             }),
@@ -65,7 +67,7 @@ export const formDef = [
       gui.inputs.custom(
         'routeMap',
         'trip',
-        (params: DxRuntimeParams) => ({
+        (params: RuntimeParams) => ({
           uid: 'routeMap',
           props: { height: 520, stops: readTrip(params)?.stops ?? [] },
         }),

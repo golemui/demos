@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import type { WithWidget, DisplayWidget } from '@golemui/core';
-import { useDisplayWdiget } from '@golemui/react';
+import { useDisplayWidget } from '@golemui/react';
 import { getBrand, maskedDisplay } from '../lib/cardBrands';
 import { useCardFlipped } from '../lib/flipStore';
 import { BrandMark } from './BrandMark';
@@ -22,7 +22,7 @@ interface Props {
  */
 export function CardPreview(widgetInstance: WithWidget) {
   const widget = widgetInstance.widget as DisplayWidget<string>;
-  const { uid, templateData } = useDisplayWdiget<Props>(widget);
+  const { uid, templateData } = useDisplayWidget<Props>(widget);
 
   const flipped = useCardFlipped();
   const innerRef = useRef<HTMLDivElement>(null);

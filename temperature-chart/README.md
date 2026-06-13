@@ -38,10 +38,6 @@ npm run dev
   tree-shaken Chart.js pieces a line chart needs, creates the chart once in an
   effect, then pushes new values in whenever the form data changes.
 
-> Note: in `@golemui/react@0.17` the display hook ships with a typo —
-> `useDisplayWdiget` (the docs call it `useDisplayWidget`). The widget uses the
-> real exported name.
-
 ## Learn more
 
 - [GolemUI docs](https://golemui.com/dx/getting-started/installation/)

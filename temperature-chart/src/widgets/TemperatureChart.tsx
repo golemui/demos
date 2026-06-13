@@ -1,9 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { DisplayWidget, WithWidget } from '@golemui/core';
-// NOTE: in @golemui/react@0.17 the display hook is exported with a typo
-// ("Wdiget"). The docs call it `useDisplayWidget`; the package ships
-// `useDisplayWdiget`. We use the real exported name.
-import { useDisplayWdiget } from '@golemui/react';
+import { useDisplayWidget } from '@golemui/react';
 import {
   CategoryScale,
   Chart,
@@ -40,7 +37,7 @@ interface TemperatureChartProps {
 
 export function TemperatureChart(widgetInstance: WithWidget) {
   const widget = widgetInstance.widget as DisplayWidget;
-  const { uid, templateData } = useDisplayWdiget<TemperatureChartProps>(widget);
+  const { uid, templateData } = useDisplayWidget<TemperatureChartProps>(widget);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartRef = useRef<Chart<'line'> | null>(null);

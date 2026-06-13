@@ -10,10 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@golemui/core": "0.17.0",
-    "@golemui/react": "0.17.0",
-    "@golemui/gui-react": "0.17.0",
-    "@golemui/gui-shared": "0.17.0",
+    "@golemui/core": "1.0.0-rc.3",
+    "@golemui/react": "1.0.0-rc.3",
+    "@golemui/gui-react": "1.0.0-rc.3",
+    "@golemui/gui-shared": "1.0.0-rc.3",
     "card-validator": "^10.0.0",
     "gsap": "^3.12.5",
     "react": "^19.0.0",
