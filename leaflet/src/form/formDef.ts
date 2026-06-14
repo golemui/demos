@@ -42,7 +42,7 @@ export const formDef = [
                     // Writes inside a repeater don't trigger a global recompute,
                     // so this fires an event the app turns into a "kick" that
                     // refreshes the sibling map + summary. See App.tsx.
-                    onChange: 'tripChanged',
+                    onChange: () => 'tripChanged',
                     props: { placeholder: 'Type an address…', lang: 'en' },
                   },
                 ),
