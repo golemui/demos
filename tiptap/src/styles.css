@@ -1,0 +1,379 @@
+/* Demo-specific styles. The shared chrome (header, page background) lives in
+   _shared/shell.css; everything here themes the editor, the embedded form
+   blocks, the slash menu and the JSON panel using GolemUI's --gui-* tokens so
+   it all tracks light / dark / auto. */
+
+.tt {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.tt__header {
+  margin-bottom: var(--gui-space-6, 24px);
+}
+
+.tt__title {
+  font-size: var(--gui-font-lg, 1.5rem);
+  font-weight: 700;
+  margin: 0 0 var(--gui-space-2, 8px);
+  letter-spacing: -0.01em;
+}
+
+.tt__subtitle {
+  margin: 0;
+  max-width: 70ch;
+  color: var(--gui-text-secondary);
+  line-height: 1.55;
+}
+
+.tt__subtitle code,
+.json-panel__hint code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  background: var(--gui-bg-subtle);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+.tt__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gui-space-3, 12px);
+  margin-top: var(--gui-space-4, 16px);
+  flex-wrap: wrap;
+}
+
+.tt__roundtrip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 var(--gui-space-4, 16px);
+  border: 1px solid var(--gui-border-default);
+  border-radius: var(--gui-radius-md, 8px);
+  background: var(--gui-bg-surface);
+  color: var(--gui-text-default);
+  font-size: var(--gui-font-sm, 0.875rem);
+  font-weight: 600;
+  cursor: pointer;
+}
+.tt__roundtrip:hover {
+  background: var(--gui-bg-surface-hover);
+}
+.tt__roundtrip .material-icons {
+  font-size: 18px;
+}
+
+.tt__status {
+  color: var(--gui-text-secondary);
+  font-size: var(--gui-font-sm, 0.875rem);
+}
+
+/* ---- Two columns: editor + JSON panel ---- */
+.tt__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: var(--gui-space-5, 20px);
+  align-items: start;
+}
+@media (max-width: 920px) {
+  .tt__columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tt__editor-pane {
+  border: 1px solid var(--gui-border-default);
+  border-radius: var(--gui-radius-md, 8px);
+  background: var(--gui-bg-surface);
+  overflow: hidden;
+}
+
+/* ---- Toolbar ---- */
+.tb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--gui-border-default);
+  background: var(--gui-bg-subtle);
+}
+.tb__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gui-text-default);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.tb__btn:hover {
+  background: var(--gui-bg-surface-hover);
+}
+.tb__btn--active {
+  background: var(--gui-primary);
+  color: #fff;
+}
+.tb__btn--ghost {
+  border-color: var(--gui-border-default);
+  font-size: 0.8rem;
+}
+.tb__btn .material-icons {
+  font-size: 18px;
+}
+.tb__sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 6px;
+  background: var(--gui-border-default);
+}
+.tb__label {
+  color: var(--gui-text-secondary);
+  font-size: 0.8rem;
+  margin-left: 2px;
+}
+
+/* ---- The editor surface ---- */
+.tt__editor {
+  padding: var(--gui-space-5, 20px) var(--gui-space-6, 24px);
+}
+.tt__editor .ProseMirror {
+  outline: none;
+  min-height: 360px;
+  line-height: 1.6;
+  color: var(--gui-text-default);
+}
+.tt__editor .ProseMirror:focus {
+  outline: none;
+}
+.tt__editor .ProseMirror h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0.4em 0 0.3em;
+  letter-spacing: -0.01em;
+}
+.tt__editor .ProseMirror p {
+  margin: 0.5em 0;
+}
+.tt__editor .ProseMirror ul {
+  padding-left: 1.4em;
+  margin: 0.5em 0;
+}
+/* StarterKit placeholder for an empty doc isn't enabled; keep a soft hint. */
+.tt__editor .ProseMirror p.is-empty::before {
+  content: 'Type "/" for a form…';
+  color: var(--gui-text-secondary);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* ---- Embedded GolemUI form block (golemForm node view) ---- */
+.gfb {
+  margin: var(--gui-space-4, 16px) 0;
+  border: 1px solid var(--gui-border-default);
+  border-radius: var(--gui-radius-md, 8px);
+  background: var(--gui-bg-default);
+  overflow: hidden;
+}
+.gfb--selected {
+  border-color: var(--gui-primary);
+  box-shadow: 0 0 0 1px var(--gui-primary);
+}
+.gfb__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--gui-bg-subtle);
+  border-bottom: 1px solid var(--gui-border-default);
+  font-size: 0.78rem;
+}
+.gfb__handle {
+  cursor: grab;
+  color: var(--gui-text-secondary);
+  font-size: 18px !important;
+}
+.gfb__handle:active {
+  cursor: grabbing;
+}
+.gfb__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--gui-text-default);
+}
+.gfb__label .material-icons {
+  font-size: 16px;
+  color: var(--gui-primary);
+}
+.gfb__id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--gui-text-secondary);
+  opacity: 0.7;
+}
+.gfb__submitted {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #16a34a;
+  font-weight: 600;
+}
+.gfb__submitted .material-icons {
+  font-size: 15px;
+}
+.gfb__delete {
+  margin-left: auto;
+  display: inline-flex;
+  border: none;
+  background: transparent;
+  color: var(--gui-text-secondary);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+}
+.gfb__delete:hover {
+  color: #dc2626;
+  background: var(--gui-bg-surface-hover);
+}
+.gfb__delete .material-icons {
+  font-size: 18px;
+}
+.gfb__body {
+  padding: var(--gui-space-4, 16px);
+}
+.gfb__error {
+  display: flex;
+  gap: 10px;
+  padding: var(--gui-space-4, 16px);
+  color: #b91c1c;
+}
+.gfb__error .material-icons {
+  font-size: 20px;
+}
+.gfb__error p {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+/* ---- Slash command menu ---- */
+.slash-popup {
+  /* positioned inline by slash-command.ts */
+}
+.slash-menu {
+  width: 320px;
+  max-height: 320px;
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid var(--gui-border-default);
+  border-radius: var(--gui-radius-md, 8px);
+  background: var(--gui-bg-surface);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+.slash-menu--empty {
+  padding: 12px;
+  color: var(--gui-text-secondary);
+  font-size: 0.85rem;
+}
+.slash-menu__heading {
+  padding: 4px 8px 6px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gui-text-secondary);
+}
+.slash-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: var(--gui-text-default);
+}
+.slash-menu__item--active {
+  background: var(--gui-bg-subtle);
+}
+.slash-menu__icon {
+  font-size: 22px !important;
+  color: var(--gui-primary);
+}
+.slash-menu__text {
+  display: flex;
+  flex-direction: column;
+}
+.slash-menu__title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.slash-menu__desc {
+  font-size: 0.78rem;
+  color: var(--gui-text-secondary);
+}
+
+/* ---- JSON panel ---- */
+.json-panel {
+  position: sticky;
+  top: var(--gui-space-4, 16px);
+  border: 1px solid var(--gui-border-default);
+  border-radius: var(--gui-radius-md, 8px);
+  background: var(--gui-bg-surface);
+  overflow: hidden;
+}
+.json-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--gui-border-default);
+  background: var(--gui-bg-subtle);
+}
+.json-panel__head .material-icons {
+  font-size: 18px;
+  color: var(--gui-primary);
+}
+.json-panel__title {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.json-panel__badge {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--gui-primary);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.json-panel__hint {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: var(--gui-text-secondary);
+  border-bottom: 1px solid var(--gui-border-default);
+}
+.json-panel__code {
+  margin: 0;
+  padding: 14px;
+  max-height: 60vh;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--gui-text-default);
+  white-space: pre;
+}
