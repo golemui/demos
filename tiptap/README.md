@@ -39,6 +39,7 @@ npm run dev
 
 ## Learn more
 
+- [Blog post](https://golemui.com/blog/turn-a-tiptap-document-into-a-database-with-golemui/)
 - [GolemUI docs](https://golemui.com/dx/getting-started/installation/)
 - [Form definition API](https://golemui.com/dx/form-definition-api/)
 - [Widgets reference](https://golemui.com/dx/widgets-reference/)
