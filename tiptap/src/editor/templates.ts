@@ -56,7 +56,7 @@ const contact: FormDef = {
       path: 'message',
       label: 'Message',
       validator: { type: 'string', required: true },
-      props: { placeholder: 'How can we help?', rows: 4 },
+      props: { placeholder: 'How can we help?', minimumHeight: 96 },
     },
     {
       kind: 'action',
@@ -96,8 +96,8 @@ const rsvp: FormDef = {
       type: 'number',
       path: 'guests',
       label: 'Number of guests',
-      validator: { type: 'number' },
-      props: { min: 0, max: 6 },
+      validator: { type: 'number', minimum: 0, maximum: 6 },
+      props: { minimum: 0, maximum: 6 },
     },
     {
       kind: 'input',
@@ -150,7 +150,7 @@ const feedback: FormDef = {
       type: 'textarea',
       path: 'comments',
       label: 'Anything else?',
-      props: { placeholder: 'Tell us more…', rows: 3 },
+      props: { placeholder: 'Tell us more…', minimumHeight: 72 },
     },
     {
       kind: 'input',
