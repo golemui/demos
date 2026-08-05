@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "golemui": {
+      "source": "golemui/golemui",
+      "sourceType": "github",
+      "skillPath": "skills/golemui/SKILL.md",
+      "computedHash": "f9802958295bab83124a686b0a022ed21d28561bb7d3a578a28df14f180ff00e"
+    }
+  }
+}
