@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ChatPanelComponent } from '../chat/chat-panel.component';
+import { AguiClientService } from '../agui/agui-client.service';
 import { handleClaimFormEvent } from './claim-form-events';
+import { CLAIMS_HARNESS_TOOLS } from './payout-tool';
 
 @Component({
   selector: 'app-claims-page',
@@ -16,7 +18,7 @@ import { handleClaimFormEvent } from './claim-form-events';
         </div>
       </header>
       <main class="panel">
-        <app-chat-panel [formEventHandler]="onFormEvent" />
+        <app-chat-panel [formEventHandler]="onFormEvent" [harnessTools]="harnessTools" />
       </main>
     </div>
   `,
@@ -69,4 +71,12 @@ import { handleClaimFormEvent } from './claim-form-events';
 })
 export class ClaimsPageComponent {
   protected readonly onFormEvent = handleClaimFormEvent;
+  protected readonly harnessTools = CLAIMS_HARNESS_TOOLS;
+
+  constructor() {
+    // Declare the supervised tools to the agent — this is what lets the LLM
+    // propose an issue_payout call in the first place.
+    const client = inject(AguiClientService);
+    for (const { tool } of Object.values(CLAIMS_HARNESS_TOOLS)) client.registerTool(tool);
+  }
 }

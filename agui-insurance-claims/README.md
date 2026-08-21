@@ -1,13 +1,29 @@
-# AG-UI × GolemUI — insurance claims agent
+# AG-UI × GolemUI — insurance claims agent (with a harness)
 
-An AI agent that drives a real **GolemUI** form through the **[AG-UI protocol](https://docs.ag-ui.com)**.
+An AI agent that drives a real **GolemUI** form through the **[AG-UI protocol](https://docs.ag-ui.com)** —
+and an **agent harness** that supervises what the agent wants to execute.
 
-The user chats with an insurance assistant ("my bike was stolen in Amsterdam yesterday").
-Instead of asking field by field, the agent emits a `render_form` tool call whose argument
-is a **GolemUI JSON form definition**. The frontend validates nothing itself — the server
-already did — and mounts a live `<gui-form>` inline in the chat, pre-filled with everything
-the user already said. On submit, the validated form data is returned to the agent as the
-tool result, and the agent confirms the claim in chat.
+The demo has two acts, one per direction of the human↔agent contract:
+
+1. **The agent asks the human** (`render_form`): the user chats with an insurance
+   assistant ("my bike was stolen in Amsterdam yesterday"). Instead of asking field by
+   field, the agent emits a `render_form` tool call whose argument is a **GolemUI JSON
+   form definition**. The frontend validates nothing itself — the server already did —
+   and mounts a live `<gui-form>` inline in the chat, pre-filled with everything the
+   user already said. On submit, the validated form data is returned to the agent as
+   the tool result, and the agent confirms the claim in chat.
+2. **The human supervises the agent** (`issue_payout`, the harness): the agent assesses
+   the claim and proposes a payout as a tool call it fills in itself. The app does NOT
+   execute it — it derives an approval form **from the tool's JSON Schema**
+   ([`harness.ts`](app/src/app/agui/harness.ts)), pre-fills it with the agent's proposed
+   arguments, and lets the human edit any field (the schema's constraints validate the
+   human's edits too), approve, or reject. Only then does the app run the action, and
+   the tool result reports back **the diff between what the agent proposed and what the
+   human approved** — so the agent can acknowledge the correction.
+
+Note the asymmetry — it's the whole point: in act 1 the LLM authors the form definition
+(so it must be validated, with retries); in act 2 the definition is derived
+deterministically from the tool's schema and the LLM only supplies the *values*.
 
 There is **no `@golemui/ag-ui` package (yet)** — all bridge logic lives in
 [`app/src/app/agui/`](app/src/app/agui/), isolated so it can be extracted later.
@@ -49,6 +65,45 @@ design input for that package.
 - Scenario knowledge (claim fields, available host event handlers, pre-fill rules) lives in
   the server's system prompt ([`agent.ts`](agent/src/agent.ts)); the bridge stays generic.
 
+### The harness (supervised tools)
+
+```
+agent proposes            issue_payout { claimId, beneficiary, amount: 450, … }
+        │
+        ▼
+agui/harness.ts           tool JSON Schema ──► GolemUI form definition
+agui/ToolApprovalComponent    └─ pre-filled with the agent's proposed args
+        │
+        ▼
+human                     edits amount to 400 (schema validators apply), approves
+        │                 — or rejects, and nothing runs
+        ▼
+claims/payout-tool.ts     execute(data) → { transferId, … }        (host code)
+        │
+        ▼
+tool result               { status: "approved",
+                            humanChanges: [{ path: "amount", proposed: 450, approved: 400 }],
+                            result: { transferId: "TRF-…" } }
+        │
+        ▼
+agent                     "Done! Transfer TRF-… — I've noted you adjusted the amount."
+```
+
+- **One generic surface for any tool.** [`harness.ts`](app/src/app/agui/harness.ts) maps
+  JSON Schema properties to GolemUI widgets (`enum`→select, `boolean`→checkbox,
+  `number`→number, long `string`→textarea, nested objects→dot-paths) and schema
+  constraints (`required`, `minimum`/`maximum`, `minLength`/`maxLength`) to GolemUI
+  validators. No approval UI is hand-written per tool.
+- **The schema is the policy.** `amount.maximum: 5000` bounds the agent's proposal AND
+  the human's edit in the same place — the E2E even proves it by attempting an
+  out-of-range edit and hitting the validator.
+- **The diff is the feedback loop.** `humanChanges` tells the agent how its proposal was
+  corrected, not just that it was accepted — context it can use for the rest of the
+  conversation.
+- Registering a new supervised action is app-side only: write the schema + an `execute`
+  function ([`payout-tool.ts`](app/src/app/claims/payout-tool.ts)), register it on the
+  page — the bridge does the rest.
+
 ## Setup
 
 Requires Node 20+.
@@ -89,8 +144,16 @@ npm run e2e           # browser E2E against the running app (use dev:mock; needs
 3. Submit with an empty description → inline validation errors, no submit event fires.
 4. Fill a description (≥ 20 chars) and a police report number, click **Submit claim** →
    the form collapses to “Form submitted — thanks!” and the agent streams a confirmation
-   with a claim id (`CLM-2026-XXXX`) and next steps.
-5. Testing the **invalid-definition retry path**: edit
+   with a claim id (`CLM-2026-XXXX`).
+5. The agent then proposes a payout: an **Approval required** card appears with a form
+   derived from the `issue_payout` JSON Schema, pre-filled with the agent's proposal
+   (claim id, beneficiary, €450, transfer note).
+6. Edit the amount to 400 — try 454000 first if you want to see the schema's
+   `maximum: 5000` reject the human too — and click **Approve & execute**. The card
+   collapses to “Approved” with the field-level diff, and the agent's reply mentions
+   the transfer id AND acknowledges your adjustment (`amount: 450 → 400`).
+7. Alternatively click **Reject** — nothing executes and the agent asks how to proceed.
+8. Testing the **invalid-definition retry path**: edit
    [`render-form-tool.ts`](app/src/app/agui/render-form-tool.ts) and change a widget type in
    the guide's example (e.g. `"textinput"` → `"textbox"`), then ask the model to copy the
    example verbatim — the server logs
@@ -125,9 +188,12 @@ app/
     render-form-tool.ts      render_form Tool + condensed GolemUI authoring guide
     agui-client.service.ts   HttpAgent wrapper (messages/running/error as signals)
     form-tool.component.ts   render_form tool call → GuiFormInitConfig → <gui-form>
-  src/app/chat/              chat panel UI (generic)
-  src/app/claims/            host page + GolemUI form event handlers (city loading)
-scripts/e2e.mjs              puppeteer E2E of the whole loop (mock agent)
+    harness.ts               ★ JSON Schema → GolemUI form def + proposal/approval diff
+    tool-approval.component.ts  supervised tool call → pre-filled approval <gui-form>
+  src/app/chat/              chat panel UI (generic; renders approvals for registered tools)
+  src/app/claims/            host page + form event handlers + payout-tool.ts (schema
+                             + execute fn for issue_payout — the app-side registration)
+scripts/e2e.mjs              puppeteer E2E of the whole loop incl. payout approval (mock agent)
 ```
 
 ## Findings for a future `@golemui/ag-ui` package
@@ -205,7 +271,17 @@ Friction points and design input collected while building this, roughly ordered 
     when — depends on whatever the LLM authors at runtime. The package docs should ship
     the `prebundle: { exclude: ["@golemui/gui-angular"] }` guidance (see Troubleshooting).
 
-12. **Not covered here (stretch goals for the package):** agent-driven `STATE_DELTA`
+12. **Schema→form conversion is package material.** The harness's
+    `schemaToFormDef` covers the JSON Schema subset LLM tool definitions actually use
+    (flat + nested objects, enum, numeric/string bounds) in ~150 lines, and the result
+    needs no runtime validation because it's derived, not authored. A packaged version
+    should add per-field UI hints (widget override, currency, readonly) without letting
+    hints leak into the wire schema. One UX nuance found: pre-filling a `number` widget
+    and letting the human edit it is where schema `minimum`/`maximum` earn their keep —
+    fat-finger edits (454000 for 400) get caught by the same constraints that bound
+    the agent.
+
+13. **Not covered here (stretch goals for the package):** agent-driven `STATE_DELTA`
     patches into a rendered form, `INJECT_VALIDATION_ISSUES` driven by an agent-side
     review of submitted data, multiple concurrent forms per thread, and streaming
     partial pre-fill.

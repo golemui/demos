@@ -12,11 +12,13 @@ import type { FormEvent } from '@golemui/core';
 import type { AssistantMessage, Message, ToolCall } from '@ag-ui/core';
 import { AguiClientService } from '../agui/agui-client.service';
 import { FormToolComponent } from '../agui/form-tool.component';
+import { ToolApprovalComponent } from '../agui/tool-approval.component';
+import type { ApprovalDecision, HarnessToolEntry, HarnessToolRegistry } from '../agui/harness';
 
 @Component({
   selector: 'app-chat-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormToolComponent],
+  imports: [FormToolComponent, ToolApprovalComponent],
   template: `
     <div class="chat" #scroller>
       @if (client.messages().length === 0) {
@@ -43,6 +45,14 @@ import { FormToolComponent } from '../agui/form-tool.component';
                 [completed]="client.hasToolResult(call.id)"
                 (submitted)="onFormSubmitted(call.id, $event)"
                 (formEvent)="formEventHandler()($event)"
+              />
+            }
+            @for (supervised of harnessCalls(message); track supervised.call.id) {
+              <app-tool-approval
+                [toolCall]="supervised.call"
+                [tool]="supervised.entry.tool"
+                [completed]="client.hasToolResult(supervised.call.id)"
+                (decided)="onDecision(supervised, $event)"
               />
             }
           }
@@ -190,6 +200,9 @@ export class ChatPanelComponent {
   /** GolemUI form events are handled by the host application, not the chat. */
   readonly formEventHandler = input.required<(event: FormEvent) => void>();
 
+  /** Tools the harness supervises (approval form + host-side execution). */
+  readonly harnessTools = input<HarnessToolRegistry>({});
+
   protected readonly draft = signal('');
   private readonly scroller = viewChild.required<ElementRef<HTMLDivElement>>('scroller');
 
@@ -211,6 +224,13 @@ export class ChatPanelComponent {
     );
   }
 
+  protected harnessCalls(message: Message): Array<{ call: ToolCall; entry: HarnessToolEntry }> {
+    const registry = this.harnessTools();
+    return ((message as AssistantMessage).toolCalls ?? [])
+      .filter((call) => call.function.name in registry)
+      .map((call) => ({ call, entry: registry[call.function.name] }));
+  }
+
   protected send(text: string): void {
     void this.client.sendUserMessage(text);
   }
@@ -225,5 +245,27 @@ export class ChatPanelComponent {
 
   protected onFormSubmitted(toolCallId: string, data: Record<string, unknown>): void {
     void this.client.sendToolResult(toolCallId, data);
+  }
+
+  /**
+   * The harness loop closes here: on approval, run the business action and
+   * report the outcome — INCLUDING the human's edits — back to the agent.
+   */
+  protected onDecision(
+    supervised: { call: ToolCall; entry: HarnessToolEntry },
+    decision: ApprovalDecision,
+  ): void {
+    void (async () => {
+      if (decision.status === 'rejected') {
+        await this.client.sendToolResult(supervised.call.id, { status: 'rejected' });
+        return;
+      }
+      const result = await supervised.entry.execute(decision.data);
+      await this.client.sendToolResult(supervised.call.id, {
+        status: 'approved',
+        humanChanges: decision.humanChanges,
+        result,
+      });
+    })();
   }
 }

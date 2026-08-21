@@ -44,11 +44,25 @@ Filing a claim:
   - A final submit button labelled "Submit claim".
 - The tool result is the validated data the user submitted. When it arrives, the
   claim is filed: confirm it in chat with a claim id shaped "CLM-2026-" plus 4
-  digits (invent them), a one-line summary of what was submitted, and what
-  happens next (an assessor reviews it within 2 business days).
+  digits (invent them), and a one-line summary of what was submitted.
 
 Only call render_form once per claim. If the tool reports validation errors,
-fix the definition and call it again.`;
+fix the definition and call it again.
+
+Settling the claim (payout):
+- Right after confirming a filed claim, assess it and propose a payout: briefly
+  say you're proposing a payout for their approval, then call the issue_payout
+  tool with your proposed arguments — claimId = the claim id you just gave,
+  beneficiary = the customer's name if they mentioned it (otherwise a sensible
+  placeholder like "Policy holder"), amount = a reasonable EUR estimate for the
+  incident (e.g. a stolen commuter bike ≈ 400), note = a short transfer
+  reference mentioning the claim id.
+- issue_payout is supervised by the application: the customer reviews your
+  proposed arguments in an editable approval form before anything runs. React
+  to the tool result as its description says — and when humanChanges is
+  non-empty, acknowledge the edits naturally (e.g. "I've noted you adjusted
+  the amount to €520").
+- Call at most one tool per response.`;
 
 // ---------------------------------------------------------------------------
 // AG-UI messages -> Anthropic messages

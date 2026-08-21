@@ -1,14 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import { EventType } from '@ag-ui/core';
-import type { BaseEvent, RunAgentInput } from '@ag-ui/core';
+import type { AssistantMessage, BaseEvent, RunAgentInput } from '@ag-ui/core';
 import type { EmitFn } from './agent.js';
 import { validateFormDef } from './validate.js';
 
 /**
  * Deterministic stand-in for the Anthropic loop, enabled with MOCK_AGENT=1.
  * Lets the demo run end to end (streaming text, form rendering, pre-fill,
- * conditional widgets, submit, confirmation) without an ANTHROPIC_API_KEY.
+ * conditional widgets, submit, claim confirmation, and the supervised
+ * issue_payout approval round trip) without an ANTHROPIC_API_KEY.
  */
+
+const CLAIM_ID = 'CLM-2026-4821';
 
 const yesterday = () => {
   const date = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -151,11 +154,30 @@ async function streamText(emit: EmitFn, text: string): Promise<void> {
   emit({ type: EventType.TEXT_MESSAGE_END, messageId } as BaseEvent);
 }
 
+function emitToolCall(emit: EmitFn, name: string, args: unknown): void {
+  const toolCallId = randomUUID();
+  emit({ type: EventType.TOOL_CALL_START, toolCallId, toolCallName: name } as BaseEvent);
+  emit({ type: EventType.TOOL_CALL_ARGS, toolCallId, delta: JSON.stringify(args) } as BaseEvent);
+  emit({ type: EventType.TOOL_CALL_END, toolCallId } as BaseEvent);
+}
+
+/** Finds which tool a tool-result message answers, by its toolCallId. */
+function toolCallName(input: RunAgentInput, toolCallId: string): string | undefined {
+  for (const message of input.messages) {
+    if (message.role !== 'assistant') continue;
+    for (const call of (message as AssistantMessage).toolCalls ?? []) {
+      if (call.id === toolCallId) return call.function.name;
+    }
+  }
+  return undefined;
+}
+
 export async function runMockAgent(input: RunAgentInput, emit: EmitFn): Promise<void> {
   const last = input.messages[input.messages.length - 1];
 
-  // A form was submitted -> confirm the claim.
-  if (last?.role === 'tool') {
+  // The claim form was submitted -> confirm the claim, then propose a payout
+  // through the supervised issue_payout tool (the harness round trip).
+  if (last?.role === 'tool' && toolCallName(input, last.toolCallId) === 'render_form') {
     let summary = '';
     try {
       const data = JSON.parse(last.content) as {
@@ -169,8 +191,47 @@ export async function runMockAgent(input: RunAgentInput, emit: EmitFn): Promise<
     }
     await streamText(
       emit,
-      `Your claim CLM-2026-${String(Math.floor(1000 + Math.random() * 9000))} has been filed${summary}. ` +
-        'An assessor will review it within 2 business days. Anything else I can help with?',
+      `Your claim ${CLAIM_ID} has been filed${summary}. Based on what you described, ` +
+        'I propose a payout of €450 — please review and approve it below.',
+    );
+    emitToolCall(emit, 'issue_payout', {
+      claimId: CLAIM_ID,
+      beneficiary: 'Policy holder',
+      amount: 450,
+      note: `${CLAIM_ID} — stolen bike settlement`,
+    });
+    return;
+  }
+
+  // The payout was approved (possibly edited) or rejected -> close the loop.
+  if (last?.role === 'tool' && toolCallName(input, last.toolCallId) === 'issue_payout') {
+    let outcome;
+    try {
+      outcome = JSON.parse(last.content) as {
+        status?: string;
+        humanChanges?: Array<{ path: string; proposed: unknown; approved: unknown }>;
+        result?: { transferId?: string };
+      };
+    } catch {
+      outcome = {} as never;
+    }
+    if (outcome.status !== 'approved') {
+      await streamText(
+        emit,
+        "Understood — I won't issue the payout. Tell me how you'd like to proceed.",
+      );
+      return;
+    }
+    const edits = (outcome.humanChanges ?? [])
+      .map((change) => `${change.path}: ${change.proposed} → ${change.approved}`)
+      .join(', ');
+    await streamText(
+      emit,
+      `Done! Transfer ${outcome.result?.transferId ?? 'TRF-??????'} is on its way. ` +
+        (edits
+          ? `I've noted your adjustments before approval (${edits}). `
+          : 'You approved my proposal as-is. ') +
+        'Anything else I can help with?',
     );
     return;
   }
@@ -187,16 +248,8 @@ export async function runMockAgent(input: RunAgentInput, emit: EmitFn): Promise<
       'and pre-filled what you already told me.',
   );
 
-  const toolCallId = randomUUID();
-  const args = {
+  emitToolCall(emit, 'render_form', {
     formDef: CLAIM_FORM_DEF,
     data: { incident: { country: 'NL', city: 'Amsterdam', date: yesterday() } },
-  };
-  emit({
-    type: EventType.TOOL_CALL_START,
-    toolCallId,
-    toolCallName: 'render_form',
-  } as BaseEvent);
-  emit({ type: EventType.TOOL_CALL_ARGS, toolCallId, delta: JSON.stringify(args) } as BaseEvent);
-  emit({ type: EventType.TOOL_CALL_END, toolCallId } as BaseEvent);
+  });
 }

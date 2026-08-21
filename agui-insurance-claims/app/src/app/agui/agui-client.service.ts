@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpAgent } from '@ag-ui/client';
-import type { Message } from '@ag-ui/core';
+import type { Message, Tool } from '@ag-ui/core';
 import { RENDER_FORM_TOOL } from './render-form-tool';
 
 const AGENT_URL = 'http://localhost:8000/awp';
@@ -22,6 +22,9 @@ export class AguiClientService {
   readonly running = signal(false);
   readonly error = signal<string | null>(null);
 
+  /** Frontend tools declared on every run; the host app registers its own on top. */
+  private readonly tools: Tool[] = [RENDER_FORM_TOOL];
+
   constructor() {
     this.agent.subscribe({
       // Fires after each streamed event has been applied to agent.messages,
@@ -33,6 +36,13 @@ export class AguiClientService {
         this.error.set(error.message);
       },
     });
+  }
+
+  /** Declares an app-specific frontend tool (e.g. a harness-supervised action). */
+  registerTool(tool: Tool): void {
+    if (!this.tools.some((existing) => existing.name === tool.name)) {
+      this.tools.push(tool);
+    }
   }
 
   async sendUserMessage(text: string): Promise<void> {
@@ -64,7 +74,7 @@ export class AguiClientService {
     this.running.set(true);
     this.error.set(null);
     try {
-      await this.agent.runAgent({ tools: [RENDER_FORM_TOOL] });
+      await this.agent.runAgent({ tools: this.tools });
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : String(error));
     } finally {

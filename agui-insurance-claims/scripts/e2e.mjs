@@ -96,6 +96,49 @@ try {
   console.log(`✓ claim id in confirmation: ${match ? match[0] : 'NOT FOUND'}`);
   if (!match) throw new Error('claim id missing from confirmation');
 
+  // 6. The agent proposes a payout -> the harness renders an approval form
+  //    derived from the issue_payout JSON Schema, pre-filled with the proposal.
+  await bodyIncludes('The agent wants to run issue_payout');
+  await page.waitForSelector('app-tool-approval gui-form', { timeout: 20000 });
+  await new Promise((r) => setTimeout(r, 1200)); // widget init
+  const approvalText = await page.evaluate(() => document.body.innerText);
+  for (const expected of ['issue_payout', 'Amount (EUR)', 'Beneficiary', 'Approve & execute']) {
+    if (!approvalText.includes(expected)) throw new Error(`expected approval UI to show "${expected}"`);
+  }
+  await page.screenshot({ path: SHOT('5-approval') });
+  console.log('✓ schema-derived approval form rendered for issue_payout');
+
+  // 7. The human edits the proposal: amount 450 -> 400.
+  const amountHandle = await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll('app-tool-approval input')].find((i) => i.value === '450') ??
+      null,
+    { timeout: 10000 },
+  );
+  const amountInput = amountHandle.asElement();
+  await amountInput.click();
+  await amountInput.evaluate((el) => el.select());
+  await amountInput.type('400');
+  console.log('✓ amount edited from 450 to 400');
+
+  // 8. Approve -> the app executes the payout and reports result + diff back.
+  const approved = await page.evaluate(() => {
+    const button = [...document.querySelectorAll('app-tool-approval gui-form button')].find((b) =>
+      b.textContent?.includes('Approve & execute'),
+    );
+    if (!button) return false;
+    button.click();
+    return true;
+  });
+  if (!approved) throw new Error('approve button not found');
+
+  // 9. The agent acknowledges the transfer AND the human's edit (the diff).
+  await bodyIncludes('Transfer TRF-');
+  await bodyIncludes('amount: 450 → 400');
+  await new Promise((r) => setTimeout(r, 400));
+  await page.screenshot({ path: SHOT('6-payout-approved') });
+  console.log('✓ payout executed; agent acknowledged the human edit (450 → 400)');
+
   console.log('\nE2E PASS');
 } finally {
   if (errors.length) {
