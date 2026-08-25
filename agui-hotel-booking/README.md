@@ -139,9 +139,15 @@ Requires Node 20+.
 
 ```bash
 npm install
-export ANTHROPIC_API_KEY=sk-ant-…   # https://platform.claude.com
+cp .env.example .env                 # put your key from https://platform.claude.com in it
 npm run dev                          # agent server on :8000 + Angular app on :4200
 ```
+
+The agent resolves `ANTHROPIC_API_KEY` from, in order: the real environment
+(`export ANTHROPIC_API_KEY=…` still works and always wins), a `.env` file in
+`agent/`, this folder, or the repo root, or a bare `ANTHROPIC_API_KEY` file (the key
+as its only content) in the same places. All of those file names are gitignored;
+see [`agent/src/env.ts`](agent/src/env.ts).
 
 No API key at hand? Run the deterministic mock agent instead (same protocol, canned
 responses, the full round trip still works):

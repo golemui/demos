@@ -46,3 +46,5 @@ Thumbs.db
 .angular
 
 ANTHROPIC_API_KEY
+.env
+.env.local

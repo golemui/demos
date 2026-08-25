@@ -1,3 +1,4 @@
+import './env.js'; // must stay the first import — populates process.env from .env/key files
 import { createServer } from 'node:http';
 import { EventEncoder } from '@ag-ui/encoder';
 import { EventType, RunAgentInputSchema } from '@ag-ui/core';
