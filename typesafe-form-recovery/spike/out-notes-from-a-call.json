@@ -1,0 +1,113 @@
+{
+  "$schema": "https://golemui.com/schemas/form.schema.json",
+  "form": [
+    {
+      "kind": "input",
+      "type": "textinput",
+      "path": "companyName",
+      "label": "Company name",
+      "validator": {
+        "type": "string",
+        "required": true
+      }
+    },
+    {
+      "kind": "input",
+      "type": "textinput",
+      "path": "contactEmail",
+      "label": "Contact email",
+      "validator": {
+        "type": "string",
+        "required": true,
+        "format": "email"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "textinput",
+      "path": "phoneNumber",
+      "label": "Phone number",
+      "validator": {
+        "type": "string"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "radiogroup",
+      "path": "howDidYouHearAboutUs",
+      "label": "How did you hear about us",
+      "props": {
+        "options": [
+          {
+            "value": "google",
+            "label": "Google"
+          },
+          {
+            "value": "linkedin",
+            "label": "LinkedIn"
+          },
+          {
+            "value": "aFriend",
+            "label": "a friend"
+          },
+          {
+            "value": "other",
+            "label": "other"
+          }
+        ]
+      },
+      "validator": {
+        "type": "string"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "currency",
+      "path": "budgetInEuros",
+      "label": "Budget in euros",
+      "validator": {
+        "type": "number"
+      },
+      "props": {
+        "hint": "we will come back with a proposal"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "datePicker",
+      "path": "projectStartDate",
+      "label": "Project start date",
+      "validator": {
+        "type": "string",
+        "format": "date"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "textarea",
+      "path": "describeYourProject",
+      "label": "Describe your project",
+      "validator": {
+        "type": "string",
+        "maxLength": 2000
+      }
+    },
+    {
+      "kind": "input",
+      "type": "checkbox",
+      "path": "iAgreeToBeContacted",
+      "label": "I agree to be contacted",
+      "validator": {
+        "type": "boolean",
+        "required": true,
+        "const": true
+      }
+    },
+    {
+      "kind": "action",
+      "type": "button",
+      "label": "Submit",
+      "actionType": "submit"
+    }
+  ]
+}

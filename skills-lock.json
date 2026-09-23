@@ -12,6 +12,12 @@
       "sourceType": "github",
       "skillPath": "skills/golemui/SKILL.md",
       "computedHash": "f9802958295bab83124a686b0a022ed21d28561bb7d3a578a28df14f180ff00e"
+    },
+    "typesafe-ai": {
+      "source": "typesafe-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/typesafe-ai/SKILL.md",
+      "computedHash": "9cd84c5e535dec8dec59917c110f9c00b4a61faadb86b432ec7e41051170af12"
     }
   }
 }

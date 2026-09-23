@@ -1,0 +1,97 @@
+# "Verify before presenting" is an order of preference: MCP tools, then the CLI, then rules
+# alone. The tests walk the agent down that ladder and check it never skips a rung.
+
+file: SKILL.md
+section: Verify before presenting
+
+tests:
+  - id: mcp-after-ts-code
+    scenario: The GolemUI MCP tools are available and the agent has just written a form with gui.* code.
+    question: What must the agent do before presenting the form?
+    options:
+      dx-check: Run `dx_check_code` on the code
+      json-validate: Run `json_validate_form_definition` on the code
+      nothing: Present it; the rules were followed
+    expect: dx-check
+
+  - id: mcp-after-json
+    scenario: The GolemUI MCP tools are available and the agent has just written a JSON form definition.
+    question: What must the agent do before presenting the definition?
+    options:
+      dx-check: Run `dx_check_code` on it
+      json-validate: Run `json_validate_form_definition` until the result is valid
+      nothing: Present it; the rules were followed
+    expect: json-validate
+
+  - id: unknown-option-name
+    scenario: With the MCP available, the agent is unsure whether a widget option is called `placeholder` or `hint`.
+    question: What does the skill say to do?
+    options:
+      spec: Use `dx_get_spec` / `json_get_widget_spec` to look it up
+      guess: Pick the most likely name and rely on `dx_check_code` to catch it
+      node-modules: Read the TypeScript declarations in node_modules
+    expect: spec
+
+  - id: cli-when-no-mcp
+    scenario: No MCP tools are available, but Node 18+ is, and the agent has written a gui.* form.
+    question: What does the skill say to do?
+    options:
+      cli: Write the form to a file and run `npx -y @golemui/gui-mcp check-dx <file.ts>`
+      present-warning: Present the form with a note that it could not be verified
+      skip: Skip verification; it is optional without the MCP
+    expect: cli
+
+  - id: cli-exit-1
+    # Deliberately says nothing about what exit 1 means: the skill has to say it.
+    scenario: The agent ran the CLI check and the command exited with code 1.
+    question: May the agent present the form as it is?
+    expect: no
+
+  - id: neither-available
+    scenario: Neither the MCP tools nor the CLI can be used in this environment.
+    question: What does the skill say the agent should do?
+    options:
+      rules-and-offer: Follow the skill's rules exactly and offer the user the MCP install from references/mcp.md
+      refuse: Refuse to write the form until the MCP is installed
+      silent: Present the form without mentioning verification
+    expect: rules-and-offer
+
+  - id: never-unverified
+    scenario: The agent has written a form and verification is possible but would take an extra step.
+    question: Does the skill allow presenting the form without running the verification?
+    expect: no
+
+  - id: mcp-first
+    scenario: Both the MCP tools and the CLI are available.
+    question: Which does the skill prefer?
+    options:
+      mcp: The MCP tools
+      cli: The CLI
+      either: No preference is stated
+    expect: mcp
+
+mutations:
+  - id: verification-optional
+    replace:
+      - find: "Never present an unverified form. In order of preference:"
+        with: "Verification is recommended when convenient. Options:"
+    kills: [never-unverified]
+
+  - id: cli-becomes-first
+    note: The ladder order flips.
+    replace:
+      - find: "In order of preference:"
+        with: "In order of preference (the CLI is preferred over the MCP whenever both are available):"
+    kills: [mcp-first]
+
+  - id: exit-1-is-fine
+    replace:
+      - find: "exit 0 = pass, 1 = fix the reported problems and re-run."
+        with: "exit 0 = pass, 1 = warnings only, the form can be presented as is."
+    kills: [cli-exit-1]
+
+  - id: no-fallback-offer
+    replace:
+      - find: "**Neither possible**: follow this skill's rules exactly, and offer the user the MCP install from [references/mcp.md](references/mcp.md)."
+        with: "**Neither possible**: do not write the form; tell the user to install the MCP first."
+    kills: [neither-available]

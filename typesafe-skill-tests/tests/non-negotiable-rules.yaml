@@ -1,0 +1,146 @@
+# The seven "Non-negotiable rules" are the silent failure modes: code that compiles and then
+# breaks at runtime. An agent that has read them must make the right call in the concrete
+# situation each rule guards, so every test here is a situation, not a recall question.
+
+file: SKILL.md
+section: Non-negotiable rules
+
+tests:
+  - id: formconfig-placement
+    scenario: The agent's form needs named `states` and a `validateOn` setting that apply to the whole form.
+    question: Where does the skill say those go?
+    options:
+      wrapper: "Inside formDef, wrapping the array — `formDef: { states, validateOn, form: [...] }`"
+      formConfig: In a sibling `formConfig` next to the bare `formDef` array
+      per-widget: On each widget item
+    expect: formConfig
+
+  - id: wrapped-formdef-outcome
+    scenario: "The agent wrote `formDef: { states, form: [...] }` and the code compiles without errors."
+    question: Will the form render correctly?
+    expect: no
+
+  - id: include-as-config-key
+    scenario: >-
+      The agent wants a field to appear only under a condition and writes
+      `{ ...gui.inputs.textInput('x', {...}), include: { when: "..." } }`
+      — spreading `include` onto the factory result.
+    question: Will the field be conditionally shown?
+    expect: no
+
+  - id: validator-dropdown
+    scenario: The agent adds a required `dropdown` widget.
+    question: Which validator shape does the skill require for it?
+    options:
+      loose: "`{ required: true }` with no `type`"
+      typed: "`{ type: 'string', required: true }` with an explicit `type`"
+      rules-only: "Only rules such as `{ minItems: 1 }`, the type is supplied automatically"
+    expect: typed
+
+  - id: validator-textinput
+    scenario: The agent adds a required `textInput` widget.
+    question: Which validator shape does the skill require for it?
+    options:
+      loose: "`{ required: true }` with no `type`"
+      typed: "`{ type: 'string', required: true }` with an explicit `type`"
+      rules-only: "Only rules such as `{ minItems: 1 }`, the type is supplied automatically"
+    expect: loose
+
+  - id: validator-repeater
+    scenario: The agent adds a `repeater` that must have at least one item.
+    question: Which validator shape does the skill require for it?
+    options:
+      loose: "`{ required: true }` with no `type`"
+      typed: "`{ type: 'array', required: true, minItems: 1 }` with an explicit `type`"
+      rules-only: "Only rules such as `{ required: true, minItems: 1 }`, the type is supplied automatically"
+    expect: rules-only
+
+  - id: static-heading
+    scenario: The agent needs a static heading above a group of fields.
+    question: What does the skill say to use?
+    options:
+      markdown: "`gui.inputs.markdown` with the heading text"
+      display: "`gui.displays.display(() => <h2>…</h2>)` returning the framework's own node"
+      label-only: A textInput with only a label and no path
+    expect: display
+
+  - id: markdown-is-editor
+    scenario: The agent considers `gui.inputs.markdown` for rendering a read-only paragraph of help text.
+    question: Is `gui.inputs.markdown` a display widget for static content?
+    expect: no
+
+  - id: stylesheet-import
+    scenario: The agent wired the form and it renders, but with no styling at all.
+    question: What does the skill say is missing?
+    options:
+      css-import: "An import of `@golemui/gui-components/index.css`, once"
+      theme-prop: A `theme` prop on the form component
+      unspecified: The skill does not cover this
+    expect: css-import
+
+  - id: vue-submit-event
+    scenario: The agent is wiring the submit handler in a Vue component.
+    question: Which event name does the skill give for Vue?
+    options:
+      camel: "`@formSubmit`"
+      kebab: "`@form-submit`"
+      on-submit: "`@submit`"
+    expect: kebab
+
+  - id: react-submit-event
+    scenario: The agent is wiring the submit handler in a React component.
+    question: Which prop name does the skill give for React?
+    options:
+      camel: "`formSubmit={...}`"
+      kebab: "`form-submit={...}`"
+      on-submit: "`onSubmit={...}`"
+    expect: camel
+
+  - id: no-submit-button-factory
+    scenario: "The agent wants a submit button and is about to call `gui.actions.submitButton({ label: 'Send' })`."
+    question: According to the skill, does that factory exist?
+    expect: no
+
+  - id: submit-button-shape
+    scenario: The agent wants a submit button.
+    question: What does the skill say a submit button is?
+    options:
+      button-actiontype: "`gui.actions.button({ label, actionType: 'submit' })`"
+      submit-button: "`gui.actions.submitButton({ label })`"
+      fluent: "A fluent builder call such as `gui.form().submit(label)`"
+    expect: button-actiontype
+
+mutations:
+  - id: repeater-needs-type
+    note: The three-case validator rule collapses into "always pass a type".
+    replace:
+      - find: "`repeater` auto-supplies `type: 'array'` — pass only rules (`{ required: true, minItems: 1 }`);"
+        with: "`repeater` REQUIRES an explicit `type: 'array'` (`{ type: 'array', required: true, minItems: 1 }`);"
+    kills: [validator-repeater]
+
+  - id: everything-needs-type
+    replace:
+      - find: "everything else takes the loose validator with NO `type` (`{ required: true }`)."
+        with: "everything else also REQUIRES an explicit `type` (`{ type: 'string', required: true }`)."
+    kills: [validator-textinput]
+
+  - id: vue-goes-camel
+    note: The one kebab-case exception gets "normalised" away.
+    replace:
+      - find: "Vue is the ONLY kebab-case one:"
+        with: "all frameworks use the same camelCase name:"
+      - find: "Vue `@form-submit=\"...\"`"
+        with: "Vue `@formSubmit=\"...\"`"
+    kills: [vue-submit-event]
+
+  - id: submit-button-exists
+    replace:
+      - find: "**There is no fluent builder and no `gui.actions.submitButton`.** A submit is `gui.actions.button({ label, actionType: 'submit' })`."
+        with: "**A submit is `gui.actions.submitButton({ label })`.** There is no fluent builder."
+    kills: [no-submit-button-factory, submit-button-shape]
+
+  - id: wrapper-is-fine
+    replace:
+      - find: "Wrapping the array (`formDef: { states, form: [...] }`) compiles but the form renders **blank with no error**."
+        with: "Wrapping the array (`formDef: { states, form: [...] }`) is also accepted and renders the same."
+    kills: [wrapped-formdef-outcome]

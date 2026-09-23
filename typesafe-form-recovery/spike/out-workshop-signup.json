@@ -1,0 +1,118 @@
+{
+  "$schema": "https://golemui.com/schemas/form.schema.json",
+  "form": [
+    {
+      "kind": "input",
+      "type": "textinput",
+      "path": "fullName",
+      "label": "Full name",
+      "validator": {
+        "type": "string",
+        "required": true,
+        "minLength": 3
+      }
+    },
+    {
+      "kind": "input",
+      "type": "datePicker",
+      "path": "dateOfBirth",
+      "label": "Date of birth",
+      "validator": {
+        "type": "string",
+        "format": "date"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "radiogroup",
+      "path": "experienceLevel",
+      "label": "Experience level",
+      "props": {
+        "options": [
+          {
+            "value": "beginner",
+            "label": "beginner"
+          },
+          {
+            "value": "intermediate",
+            "label": "intermediate"
+          },
+          {
+            "value": "advanced",
+            "label": "advanced"
+          }
+        ]
+      },
+      "validator": {
+        "type": "string"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "multiList",
+      "path": "whichFrameworksDoYouUse",
+      "label": "Which frameworks do you use",
+      "props": {
+        "items": [
+          {
+            "value": "react",
+            "label": "React"
+          },
+          {
+            "value": "angular",
+            "label": "Angular"
+          },
+          {
+            "value": "vue",
+            "label": "Vue"
+          },
+          {
+            "value": "lit",
+            "label": "Lit"
+          }
+        ],
+        "hint": "You can pick several"
+      },
+      "validator": {
+        "type": "array"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "number",
+      "path": "numberOfAttendees",
+      "label": "Number of attendees",
+      "validator": {
+        "type": "number",
+        "minimum": 1
+      }
+    },
+    {
+      "kind": "input",
+      "type": "checkbox",
+      "path": "iAcceptThePrivacyPolicy",
+      "label": "I accept the privacy policy",
+      "validator": {
+        "type": "boolean",
+        "required": true,
+        "const": true
+      }
+    },
+    {
+      "kind": "input",
+      "type": "textarea",
+      "path": "comments",
+      "label": "Comments",
+      "validator": {
+        "type": "string",
+        "maxLength": 500
+      }
+    },
+    {
+      "kind": "action",
+      "type": "button",
+      "label": "Submit",
+      "actionType": "submit"
+    }
+  ]
+}

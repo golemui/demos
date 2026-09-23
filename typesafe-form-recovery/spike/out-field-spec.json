@@ -1,0 +1,50 @@
+{
+  "$schema": "https://golemui.com/schemas/form.schema.json",
+  "form": [
+    {
+      "kind": "input",
+      "type": "textinput",
+      "path": "email",
+      "label": "Email",
+      "validator": {
+        "type": "string",
+        "required": true,
+        "format": "email"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "textinput",
+      "path": "fullName",
+      "label": "Full name",
+      "validator": {
+        "type": "string",
+        "required": true,
+        "maxLength": 120
+      }
+    },
+    {
+      "kind": "input",
+      "type": "textarea",
+      "path": "bio",
+      "label": "Bio",
+      "validator": {
+        "type": "string",
+        "required": true,
+        "maxLength": 5000
+      }
+    },
+    {
+      "kind": "input",
+      "type": "checkbox",
+      "path": "subscribeToNewsletter",
+      "label": "Subscribe to newsletter"
+    },
+    {
+      "kind": "action",
+      "type": "button",
+      "label": "Submit",
+      "actionType": "submit"
+    }
+  ]
+}

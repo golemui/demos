@@ -1,0 +1,179 @@
+{
+  "$schema": "https://golemui.com/schemas/form.schema.json",
+  "form": [
+    {
+      "kind": "layout",
+      "type": "flex",
+      "props": {
+        "direction": "row",
+        "gap": 16
+      },
+      "children": [
+        {
+          "kind": "input",
+          "type": "textinput",
+          "path": "orderId",
+          "label": "Order number",
+          "props": {
+            "placeholder": "A-104"
+          },
+          "validator": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z]{1,2}-\\d{3,6}$",
+            "messages": {
+              "invalid": "Order number is required",
+              "required": "Order number is required",
+              "pattern": "Order numbers look like A-104"
+            }
+          },
+          "on": {
+            "change": "changed"
+          }
+        },
+        {
+          "kind": "input",
+          "type": "textinput",
+          "path": "email",
+          "label": "Contact email",
+          "props": {
+            "placeholder": "you@example.com"
+          },
+          "validator": {
+            "type": "string",
+            "required": true,
+            "format": "email",
+            "messages": {
+              "invalid": "Contact email is required",
+              "required": "Contact email is required",
+              "format": "Enter a valid email address"
+            }
+          },
+          "on": {
+            "change": "changed"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "input",
+      "type": "select",
+      "path": "reason",
+      "label": "Reason for the claim",
+      "props": {
+        "placeholder": "Select a reason",
+        "options": [
+          {
+            "value": "damaged",
+            "label": "The product arrived damaged"
+          },
+          {
+            "value": "wrong_item",
+            "label": "I received the wrong product"
+          },
+          {
+            "value": "not_delivered",
+            "label": "The order never arrived"
+          },
+          {
+            "value": "other",
+            "label": "Something else"
+          }
+        ]
+      },
+      "validator": {
+        "type": "string",
+        "required": true,
+        "messages": {
+          "invalid": "Pick a reason",
+          "required": "Pick a reason"
+        }
+      },
+      "on": {
+        "change": "changed"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "radiogroup",
+      "path": "resolution",
+      "label": "What would you like us to do?",
+      "props": {
+        "options": [
+          {
+            "value": "refund",
+            "label": "Refund my money"
+          },
+          {
+            "value": "replacement",
+            "label": "Send a replacement"
+          }
+        ]
+      },
+      "validator": {
+        "type": "string",
+        "required": true,
+        "messages": {
+          "invalid": "Pick a resolution",
+          "required": "Pick a resolution"
+        }
+      },
+      "on": {
+        "change": "changed"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "radiogroup",
+      "path": "condition",
+      "label": "Condition of the product",
+      "props": {
+        "options": [
+          {
+            "value": "works",
+            "label": "Works fine"
+          },
+          {
+            "value": "cosmetic",
+            "label": "Works, but has cosmetic damage"
+          },
+          {
+            "value": "broken",
+            "label": "Does not work at all"
+          }
+        ]
+      },
+      "on": {
+        "change": "changed"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "checkbox",
+      "path": "urgent",
+      "label": "This is urgent",
+      "on": {
+        "change": "changed"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "textarea",
+      "path": "details",
+      "label": "Additional details",
+      "props": {
+        "placeholder": "Anything else we should know",
+        "minimumHeight": 80
+      },
+      "on": {
+        "change": "changed"
+      }
+    },
+    {
+      "kind": "action",
+      "type": "button",
+      "label": "Submit claim",
+      "actionType": "submit"
+    }
+  ]
+}
