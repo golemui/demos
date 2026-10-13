@@ -1,0 +1,288 @@
+import { MockLanguageModelV4 } from 'ai/test';
+import { simulateReadableStream } from 'ai';
+import {
+  CHECK_AVAILABILITY_TOOL_NAME,
+  addDays,
+  ASK_USER_TOOL,
+  COLLECT_PAYMENT_TOOL,
+  CONFIRM_BOOKING_TOOL,
+  today,
+} from '@hotel/shared';
+import type { BookingRequest, SpecialRequests } from '@hotel/shared';
+
+/**
+ * MOCK_AGENT=1 — a scripted language model, for running the demo without an
+ * API key (or without Wi-Fi on stage) and for the E2E test.
+ *
+ * Only the MODEL is fake: it plugs into the real Mastra agent, so tool
+ * execution, the AG-UI bridge and the browser all run the production path. It
+ * reads the conversation like an agent would and picks the next tool call —
+ * including the "only ask what's missing" behaviour: "Book a room for 2 people
+ * next week, half board" yields a form with just rooms and car.
+ */
+
+type PromptMessage = { role: string; content: unknown };
+type Part = { type: string; text?: string; toolName?: string; toolCallId?: string; output?: { type: string; value: unknown } };
+
+const usage = {
+  inputTokens: { total: 0, noCache: 0, cacheRead: 0, cacheWrite: 0 },
+  outputTokens: { total: 0, text: 0, reasoning: 0 },
+};
+
+let callCounter = 0;
+
+export function createMockModel() {
+  return new MockLanguageModelV4({
+    provider: 'mock',
+    modelId: 'scripted-concierge',
+    doStream: async (options) => {
+      const turn = nextTurn(options.prompt as unknown as PromptMessage[]);
+      const id = `mock-text-${++callCounter}`;
+      const chunks: unknown[] = [{ type: 'stream-start', warnings: [] }];
+      chunks.push({ type: 'text-start', id });
+      // Stream word by word so the UI shows real streaming.
+      for (const word of turn.text.split(/(?<= )/)) chunks.push({ type: 'text-delta', id, delta: word });
+      chunks.push({ type: 'text-end', id });
+      if (turn.tool) {
+        chunks.push({
+          type: 'tool-call',
+          toolCallId: `mock-call-${callCounter}`,
+          toolName: turn.tool.name,
+          input: JSON.stringify(turn.tool.args),
+        });
+      }
+      chunks.push({
+        type: 'finish',
+        usage,
+        finishReason: turn.tool ? { unified: 'tool-calls', raw: 'tool_use' } : { unified: 'stop', raw: 'end_turn' },
+      });
+      return { stream: simulateReadableStream({ chunks: chunks as never[], initialDelayInMs: 250, chunkDelayInMs: 25 }) };
+    },
+  });
+}
+
+interface Turn {
+  text: string;
+  tool?: { name: string; args: Record<string, unknown> };
+}
+
+function nextTurn(prompt: PromptMessage[]): Turn {
+  const last = prompt[prompt.length - 1];
+  const userText = prompt
+    .filter((message) => message.role === 'user')
+    .flatMap((message) => parts(message).filter((part) => part.type === 'text').map((part) => part.text ?? ''))
+    .join('\n');
+  const said = parseRequest(userText);
+  const results = toolResults(prompt);
+
+  if (last.role !== 'tool') {
+    // A (new) user message. Once the flow is done, just chat.
+    if (results.some((result) => result.name === COLLECT_PAYMENT_TOOL.name)) {
+      return { text: 'Anything else I can help you with? Your booking is all set.' };
+    }
+    return askForBooking(said, suggestedDates(userText));
+  }
+
+  const latest = results[results.length - 1];
+  switch (latest.name) {
+    case ASK_USER_TOOL.name: {
+      const collected = collectedBooking(said, results);
+      if (missingFields(collected).length > 0) return askForBooking(collected, suggestedDates(userText));
+      // Special requests answered → everything is known: propose the booking.
+      if (askedSpecialRequests(results)) return propose(collected);
+      return {
+        text: 'Let me check availability for those dates… ',
+        tool: { name: CHECK_AVAILABILITY_TOOL_NAME, args: { dates: collected.dates, rooms: collected.rooms } },
+      };
+    }
+
+    case CHECK_AVAILABILITY_TOOL_NAME: {
+      // A SERVER tool: Mastra ran it and called the model again in the same run.
+      const availability = latest.value as { available?: boolean; roomsLeft?: number };
+      if (!availability.available) {
+        return { text: `Sorry — only ${availability.roomsLeft ?? 0} room(s) left for those dates. Would other dates work?` };
+      }
+      const needs = specialNeeds(userText);
+      const collected = collectedBooking(said, results);
+      if (needs.fields.length === 0) return propose(collected);
+      return {
+        text: `Good news, we have rooms. You mentioned a few things — let's add them to your booking.`,
+        tool: {
+          name: ASK_USER_TOOL.name,
+          args: {
+            operation: 'createBooking',
+            fields: needs.fields.map((field) => `specialRequests.${field}`),
+            prefill: { specialRequests: needs.prefill },
+            intro: 'We’ll have these ready when you arrive',
+            submitLabel: 'Add to my booking',
+          },
+        },
+      };
+    }
+
+    case CONFIRM_BOOKING_TOOL.name: {
+      const value = latest.value as {
+        status: string;
+        booking?: { id: string; total: number };
+        humanChanges?: Array<{ path: string; proposed: unknown; approved: unknown }>;
+        problems?: string[];
+      };
+      if (value.status === 'rejected') return { text: 'No problem — what would you like to change?' };
+      if (value.status !== 'booked' || !value.booking) {
+        return { text: `The hotel couldn't take that booking: ${(value.problems ?? []).join(' ')} What should we change?` };
+      }
+      const changes = (value.humanChanges ?? []).map((change) => `${change.path} → ${format(change.approved)}`);
+      const ack = changes.length > 0 ? `I've applied your changes (${changes.join(', ')}). ` : '';
+      return {
+        text: `${ack}Booking ${value.booking.id} is reserved — €${value.booking.total.toFixed(2)} in total. Last step, the payment:`,
+        tool: { name: COLLECT_PAYMENT_TOOL.name, args: { bookingId: value.booking.id, amount: value.booking.total } },
+      };
+    }
+
+    case COLLECT_PAYMENT_TOOL.name: {
+      const value = latest.value as { status: string; brand?: string; last4?: string };
+      if (value.status !== 'paid') return { text: 'The checkout was closed. Would you like to try again?' };
+      const requests = askedSpecialRequests(results) ? ' Your special requests are saved with the booking.' : '';
+      return { text: `Payment received on your ${value.brand} ending ${value.last4}.${requests} See you at Hotel Aurora!` };
+    }
+
+    default:
+      return { text: 'Sorry, I lost track there — could you tell me what you need?' };
+  }
+}
+
+function propose(booking: Partial<BookingRequest>): Turn {
+  return {
+    text: 'Here is your booking — have a look, you can still change anything before confirming.',
+    tool: { name: CONFIRM_BOOKING_TOOL.name, args: booking as unknown as Record<string, unknown> },
+  };
+}
+
+function askForBooking(known: Partial<BookingRequest>, dates?: BookingRequest['dates']): Turn {
+  const missing = missingFields(known);
+  const prefill: Partial<BookingRequest> = {};
+  if (!known.dates && dates) prefill.dates = dates;
+  if (!known.rooms && known.guests) prefill.rooms = Math.max(1, Math.ceil(known.guests / 4));
+  if (!known.car) prefill.car = 'none';
+  return {
+    text: 'Happy to help! I just need a few details.',
+    tool: {
+      name: ASK_USER_TOOL.name,
+      args: {
+        operation: 'createBooking',
+        fields: missing,
+        prefill,
+        intro: known.guests ? `A stay for ${known.guests} — a few more details:` : 'Tell me about your stay',
+        submitLabel: 'Continue',
+      },
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Reading the conversation
+// ---------------------------------------------------------------------------
+
+const BOOKING_FIELDS = ['dates', 'guests', 'rooms', 'board', 'car'] as const;
+
+/** What the guest typed — deliberately naive regexes, English and Spanish. */
+function parseRequest(text: string): Partial<BookingRequest> {
+  const found: Partial<BookingRequest> = {};
+  const guests = /(\d+)\s*(people|persons|guests|adults|personas|adultos)/i.exec(text);
+  if (guests) found.guests = Number(guests[1]);
+  const rooms = /(\d+)\s*(rooms?|habitaci)/i.exec(text);
+  if (rooms) found.rooms = Number(rooms[1]);
+  if (/half[- ]board|media pensi/i.test(text)) found.board = 'half';
+  else if (/full[- ]board|pensi[oó]n completa/i.test(text)) found.board = 'full';
+  return found;
+}
+
+/** "Next week" is vague: it becomes a SUGGESTION (prefill) the guest confirms, not a known value. */
+function suggestedDates(text: string): BookingRequest['dates'] | undefined {
+  if (!/next week|semana que viene|pr[oó]xima semana/i.test(text)) return undefined;
+  const start = addDays(today(), 7);
+  return { start, end: addDays(start, 7) };
+}
+
+function specialNeeds(text: string): { fields: string[]; prefill: SpecialRequests } {
+  const fields: string[] = [];
+  const prefill: SpecialRequests = {};
+  if (/baby|crib|beb[eé]|cuna/i.test(text)) {
+    fields.push('babyCrib');
+    prefill.babyCrib = true;
+  }
+  if (/wheelchair|accessib|silla de ruedas|movilidad/i.test(text)) {
+    fields.push('accessibleRoom');
+    prefill.accessibleRoom = true;
+  }
+  if (/parking|aparca/i.test(text)) {
+    fields.push('parking', 'licensePlate');
+    prefill.parking = true;
+  }
+  if (/late|tarde|noche/i.test(text)) fields.push('arrivalTime');
+  if (/vegan|vegetarian|gluten|celiac|cel[ií]ac/i.test(text)) fields.push('dietary');
+  return { fields, prefill };
+}
+
+function missingFields(known: Partial<BookingRequest>): string[] {
+  return BOOKING_FIELDS.filter((field) => known[field] === undefined);
+}
+
+/** Everything the guest said or submitted so far, in the createBooking shape. */
+function collectedBooking(said: Partial<BookingRequest>, results: ToolResult[]): Partial<BookingRequest> {
+  const collected: Partial<BookingRequest> = { ...said };
+  for (const result of results) {
+    if (result.name !== ASK_USER_TOOL.name) continue;
+    const { specialRequests, ...rest } = result.value as Partial<BookingRequest>;
+    Object.assign(collected, rest);
+    if (specialRequests) collected.specialRequests = { ...collected.specialRequests, ...specialRequests };
+  }
+  return collected;
+}
+
+function askedSpecialRequests(results: ToolResult[]): boolean {
+  return results.some(
+    (result) =>
+      result.name === ASK_USER_TOOL.name &&
+      ((result.args as { fields?: string[] }).fields ?? []).some((field) => field.startsWith('specialRequests.')),
+  );
+}
+
+interface ToolResult {
+  name: string;
+  args: unknown;
+  value: unknown;
+}
+
+/** Tool results in order, each with the arguments of the call it answers. */
+function toolResults(prompt: PromptMessage[]): ToolResult[] {
+  const argsById = new Map<string, unknown>();
+  const results: ToolResult[] = [];
+  for (const message of prompt) {
+    for (const part of parts(message)) {
+      if (part.type === 'tool-call' && part.toolCallId) argsById.set(part.toolCallId, (part as { input?: unknown }).input);
+      if (part.type === 'tool-result' && part.toolName) {
+        results.push({ name: part.toolName, args: parseJson(argsById.get(part.toolCallId ?? '')) ?? {}, value: parseJson(part.output?.value) });
+      }
+    }
+  }
+  return results;
+}
+
+function parts(message: PromptMessage): Part[] {
+  return Array.isArray(message.content) ? (message.content as Part[]) : [{ type: 'text', text: String(message.content ?? '') }];
+}
+
+function parseJson(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
+function format(value: unknown): string {
+  if (value && typeof value === 'object') return Object.values(value).join(' → ');
+  return String(value);
+}

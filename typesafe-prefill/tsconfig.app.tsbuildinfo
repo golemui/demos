@@ -1,1 +1,1 @@
-{"root":["./src/App.tsx","./src/ConfidencePanel.tsx","./src/compile.ts","./src/main.tsx","./src/prefill.ts","./src/_shared/DemoShell.tsx","./src/_shared/ThemeToggle.tsx"],"version":"5.6.3"}
+{"root":["./src/app.tsx","./src/confidencepanel.tsx","./src/compile.ts","./src/main.tsx","./src/prefill.ts","./src/_shared/demoshell.tsx","./src/_shared/themetoggle.tsx","./src/_shared/brand.ts"],"version":"5.6.3"}

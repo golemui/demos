@@ -47,7 +47,7 @@ const BRANDS: Record<BrandId, Omit<BrandMeta, 'gaps' | 'maxLength' | 'codeSize' 
   jcb: { id: 'jcb', label: 'JCB', gradient: 'linear-gradient(135deg, #0b3d2e 0%, #15803d 60%, #ef4444 130%)', codeOnFront: false },
   unionpay: { id: 'unionpay', label: 'UnionPay', gradient: 'linear-gradient(135deg, #0e1b3a 0%, #c0392b 130%)', codeOnFront: false },
   maestro: { id: 'maestro', label: 'Maestro', gradient: 'linear-gradient(135deg, #0a3d62 0%, #c0392b 130%)', codeOnFront: false },
-  unknown: { id: 'unknown', label: '', gradient: 'linear-gradient(135deg, #2b2f36 0%, #4b5563 60%, #6b7280 120%)', codeOnFront: false },
+  unknown: { id: 'unknown', label: '', gradient: 'linear-gradient(135deg, #2d241f 0%, #57463c 60%, #917664 120%)', codeOnFront: false },
 };
 
 /** Map a card-validator card-type string to our BrandId. */

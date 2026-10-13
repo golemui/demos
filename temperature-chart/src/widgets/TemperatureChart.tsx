@@ -57,15 +57,15 @@ export function TemperatureChart(widgetInstance: WithWidget) {
           {
             label: 'Avg °C',
             data: series as number[],
-            // Canvas can't resolve CSS vars, so use concrete colors here.
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99, 102, 241, 0.18)',
+            // Canvas can't resolve CSS vars, so use concrete colors here (Clay terracotta).
+            borderColor: '#c25e4e',
+            backgroundColor: 'rgba(194, 94, 78, 0.16)',
             borderWidth: 2,
             fill: true,
             tension: 0.35,
             pointRadius: 4,
             pointHoverRadius: 6,
-            pointBackgroundColor: '#6366f1',
+            pointBackgroundColor: '#c25e4e',
           },
         ],
       },
@@ -78,11 +78,13 @@ export function TemperatureChart(widgetInstance: WithWidget) {
           tooltip: { callbacks: { label: (c) => ` ${c.formattedValue} °C` } },
         },
         scales: {
+          // Clay's muted ink: readable on both the light and the dark theme.
           y: {
-            title: { display: true, text: '°C' },
-            grid: { color: 'rgba(148, 163, 184, 0.2)' },
+            title: { display: true, text: '°C', color: '#8c7b6f' },
+            ticks: { color: '#8c7b6f' },
+            grid: { color: 'rgba(140, 123, 111, 0.22)' },
           },
-          x: { grid: { display: false } },
+          x: { ticks: { color: '#8c7b6f' }, grid: { display: false } },
         },
       },
     });
