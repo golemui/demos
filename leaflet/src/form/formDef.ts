@@ -22,9 +22,9 @@ const readTrip = (params: RuntimeParams): Trip | undefined =>
 export const formDef = [
   gui.displays.custom('routeSummary', { props: { md: header } }, ['intro']),
 
-  gui.layouts.grid(
+  gui.layouts.horizontalGrid(
     [
-      gui.layouts.verticalFlex(
+      gui.layouts.verticalGrid(
         [
           gui.inputs.repeater('trip.stops', {
             label: 'Route stops',
@@ -34,7 +34,7 @@ export const formDef = [
             removeButtonIcon: 'delete',
             title: 'Stop',
             template: [
-              gui.layouts.flex([
+              gui.layouts.grid([
                 gui.inputs.custom(
                   'addressAutocomplete',
                   'place',
@@ -59,7 +59,7 @@ export const formDef = [
             ['summary'],
           ),
         ],
-        { gap: 16 },
+        { gap: 'md', size: 2 },
         ['panel'],
       ),
 
@@ -69,10 +69,11 @@ export const formDef = [
         'trip',
         (params: RuntimeParams) => ({
           uid: 'routeMap',
+          size: 1,
           props: { height: 520, stops: readTrip(params)?.stops ?? [] },
         }),
       ),
     ],
-    { direction: 'row', autoFit: true },
+    { gap: 'md' },
   ),
 ];

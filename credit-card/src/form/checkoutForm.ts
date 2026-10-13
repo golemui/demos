@@ -69,7 +69,7 @@ export const checkoutConfig: GuiFormInitConfig = {
     }),
 
     // Expiry + CVV side by side.
-    gui.layouts.flex(
+    gui.layouts.horizontalGrid(
       [
         gui.inputs.custom('cardExpiry', 'card.expiry', {
           label: 'Expiry date',
@@ -88,7 +88,7 @@ export const checkoutConfig: GuiFormInitConfig = {
           };
         }),
       ],
-      { gap: 'md' } as any,
+      { gap: 'md' },
     ),
 
     // Pay — submit button, disabled until the whole form is valid.

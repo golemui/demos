@@ -65,12 +65,11 @@ const formDef = [
   }),
 
   // Inputs on the left, live chart on the right.
-  gui.layouts.horizontalFlex(
+  gui.layouts.horizontalGrid(
     [
       gui.layouts.grid(monthInputs, {
-        autoFit: true,
-        columnGap: 12,
-        rowGap: 4,
+        columns: 2,
+        gap: 'sm',
         size: 1,
       }),
       gui.displays.custom('temperatureChart', {
@@ -81,7 +80,7 @@ const formDef = [
         series: ({ $form }: { $form: FormShape }) => readSeries($form),
       }),
     ],
-    { gap: 24, align: 'start' },
+    { gap: 'lg' },
   ),
 ];
 

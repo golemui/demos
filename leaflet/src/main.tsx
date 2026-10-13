@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import 'leaflet/dist/leaflet.css';
 import '@golemui/gui-components/index.css';
+import '@golemui/gui-shared/forms.css';
 import './index.css';
 import App from './App';
 
