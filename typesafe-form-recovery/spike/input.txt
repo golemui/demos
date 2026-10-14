@@ -1,6 +1,0 @@
-I want a form with 4 fields:
-
-* field 1: Email, type text, validations email and required
-* field 2: Full name, type text, validations required and max length 120 chars
-* field 3: Bio, type textarea, validations required and max length 5000 chars
-* field 4: Subscribe to newsletter, type checkbox

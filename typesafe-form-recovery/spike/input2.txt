@@ -1,9 +1,0 @@
-Formulario de inscripción al taller
-
-- Nombre completo (obligatorio, mínimo 3 letras)
-- Fecha de nacimiento
-- Nivel de experiencia: principiante, intermedio o avanzado
-- ¿Qué frameworks usas? puede marcar varios: React, Angular, Vue, Lit
-- Número de asistentes, entre 1 y 5
-- Acepto la política de privacidad (obligatorio)
-- Comentarios, opcional, máximo 500 caracteres
