@@ -129,10 +129,9 @@ and the API, the forms and the agent's view stay in sync.
 
 ## Notes for GolemUI
 
-- `@golemui/gui-mcp@2.0.0-rc.4`: the root entry and the CLI import `subscript`,
-  `rxjs` and `ts.data.json` without declaring them, so `npx @golemui/gui-mcp`
-  fails with `ERR_MODULE_NOT_FOUND`. The `./json` entry works, and this demo
-  only uses that one.
+- `@golemui/gui-mcp`: up to 2.0.0-rc.4 the root entry and the CLI imported `subscript`,
+  `rxjs` and `ts.data.json` without declaring them, so `npx @golemui/gui-mcp` failed with
+  `ERR_MODULE_NOT_FOUND`. 2.0.0 fixes it. This demo only uses the `./json` entry.
 - `@golemui/gui-mcp/json` is an 8 MB bundle, too heavy for the browser. That's
   why forms are generated at build time and only sliced at run time.
 - Generated validators carry no `messages`, so an empty required field shows

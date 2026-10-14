@@ -153,3 +153,32 @@ body {
     display: none;
   }
 }
+
+/* ---- Dark intent tints for Clay ----
+   GolemUI 2.0.0's Clay theme gives clay-dark (and clay-auto on a dark OS) no
+   dark intent tints, so alerts fall back to the light ones: a pale cyan info
+   box on the dark page. These are the default dark theme's values. Remove this
+   block once the Clay theme ships them. */
+[data-theme='clay-dark'] {
+  --gui-intent-success-bg: color-mix(in srgb, var(--gui-color-success-500) 20%, transparent);
+  --gui-intent-success-text: var(--gui-color-success-400);
+  --gui-intent-info-bg: color-mix(in srgb, var(--gui-color-info-500) 20%, transparent);
+  --gui-intent-info-text: var(--gui-color-info-400);
+  --gui-intent-warning-bg: color-mix(in srgb, var(--gui-color-warning-500) 20%, transparent);
+  --gui-intent-warning-text: var(--gui-color-warning-400);
+  --gui-intent-error-bg: var(--gui-color-error-900);
+  --gui-intent-error-text: var(--gui-color-error-100);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme='clay-auto'] {
+    --gui-intent-success-bg: color-mix(in srgb, var(--gui-color-success-500) 20%, transparent);
+    --gui-intent-success-text: var(--gui-color-success-400);
+    --gui-intent-info-bg: color-mix(in srgb, var(--gui-color-info-500) 20%, transparent);
+    --gui-intent-info-text: var(--gui-color-info-400);
+    --gui-intent-warning-bg: color-mix(in srgb, var(--gui-color-warning-500) 20%, transparent);
+    --gui-intent-warning-text: var(--gui-color-warning-400);
+    --gui-intent-error-bg: var(--gui-color-error-900);
+    --gui-intent-error-text: var(--gui-color-error-100);
+  }
+}

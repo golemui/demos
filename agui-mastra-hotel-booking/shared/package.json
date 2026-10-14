@@ -11,7 +11,7 @@
     "test": "node --import tsx --test src/*.test.ts"
   },
   "devDependencies": {
-    "@golemui/gui-mcp": "2.0.0-rc.4",
+    "@golemui/gui-mcp": "2.0.0",
     "tsx": "^4.19.0"
   }
 }
