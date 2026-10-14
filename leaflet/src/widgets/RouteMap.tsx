@@ -174,7 +174,7 @@ export function RouteMap(widgetInstance: WithWidget) {
         if (!route || !mapRef.current) return;
         routeLayerRef.current?.remove();
         routeLayerRef.current = L.polyline(route.geometry, {
-          color: '#3b82f6',
+          color: '#c25e4e', // Clay terracotta (Leaflet can't read CSS vars)
           weight: 5,
           opacity: 0.9,
         }).addTo(mapRef.current);

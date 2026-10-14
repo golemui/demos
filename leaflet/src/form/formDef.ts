@@ -20,7 +20,9 @@ const readTrip = (params: RuntimeParams): Trip | undefined =>
   params?.$form?.trip;
 
 export const formDef = [
-  gui.displays.custom('routeSummary', { props: { md: header } }, ['intro']),
+  // A runtime function, not a static object: in 2.0.0-rc.4 static `props` on a
+  // custom display don't reach templateData (the header rendered empty).
+  gui.displays.custom('routeSummary', () => ({ props: { md: header } }), ['intro']),
 
   gui.layouts.horizontalGrid(
     [

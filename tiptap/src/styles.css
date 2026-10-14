@@ -30,7 +30,7 @@
 .json-panel__hint code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.85em;
-  background: var(--gui-bg-subtle);
+  background: var(--gui-bg-surface-hover);
   padding: 0.1em 0.35em;
   border-radius: 4px;
 }
@@ -97,7 +97,7 @@
   flex-wrap: wrap;
   padding: 8px 10px;
   border-bottom: 1px solid var(--gui-border-default);
-  background: var(--gui-bg-subtle);
+  background: var(--gui-bg-surface-hover);
 }
 .tb__btn {
   display: inline-flex;
@@ -117,8 +117,8 @@
   background: var(--gui-bg-surface-hover);
 }
 .tb__btn--active {
-  background: var(--gui-primary);
-  color: #fff;
+  background: var(--gui-intent-primary);
+  color: var(--gui-intent-primary-text, #fff);
 }
 .tb__btn--ghost {
   border-color: var(--gui-border-default);
@@ -183,15 +183,15 @@
   overflow: hidden;
 }
 .gfb--selected {
-  border-color: var(--gui-primary);
-  box-shadow: 0 0 0 1px var(--gui-primary);
+  border-color: var(--gui-intent-primary);
+  box-shadow: 0 0 0 1px var(--gui-intent-primary);
 }
 .gfb__bar {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  background: var(--gui-bg-subtle);
+  background: var(--gui-bg-surface-hover);
   border-bottom: 1px solid var(--gui-border-default);
   font-size: 0.78rem;
 }
@@ -213,7 +213,7 @@
 }
 .gfb__label .material-icons {
   font-size: 16px;
-  color: var(--gui-primary);
+  color: var(--gui-intent-primary);
 }
 .gfb__id {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -305,11 +305,11 @@
   color: var(--gui-text-default);
 }
 .slash-menu__item--active {
-  background: var(--gui-bg-subtle);
+  background: var(--gui-bg-surface-hover);
 }
 .slash-menu__icon {
   font-size: 22px !important;
-  color: var(--gui-primary);
+  color: var(--gui-intent-primary);
 }
 .slash-menu__text {
   display: flex;
@@ -339,11 +339,11 @@
   gap: 8px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--gui-border-default);
-  background: var(--gui-bg-subtle);
+  background: var(--gui-bg-surface-hover);
 }
 .json-panel__head .material-icons {
   font-size: 18px;
-  color: var(--gui-primary);
+  color: var(--gui-intent-primary);
 }
 .json-panel__title {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -354,8 +354,8 @@
   margin-left: auto;
   padding: 2px 8px;
   border-radius: 999px;
-  background: var(--gui-primary);
-  color: #fff;
+  background: var(--gui-intent-primary);
+  color: var(--gui-intent-primary-text, #fff);
   font-size: 0.72rem;
   font-weight: 600;
 }

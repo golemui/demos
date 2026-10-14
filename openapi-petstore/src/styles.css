@@ -18,7 +18,7 @@ body {
 }
 
 .subtitle a {
-  color: var(--gui-primary, #8b5cf6);
+  color: var(--gui-intent-primary, #8b5cf6);
 }
 
 /* ---- Endpoint picker ---- */
@@ -80,7 +80,7 @@ body {
   font-size: 0.78rem;
   border: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.3));
   border-radius: 8px;
-  background: var(--gui-bg-subtle, rgba(148, 163, 184, 0.06));
+  background: var(--gui-bg-surface-hover, rgba(148, 163, 184, 0.06));
   color: var(--gui-text-secondary, #94a3b8);
 }
 .pg-fetch__verb {
@@ -115,7 +115,7 @@ body {
   height: 14px;
   flex: none;
   border: 2px solid var(--gui-border-default, rgba(148, 163, 184, 0.4));
-  border-top-color: var(--gui-primary, #8b5cf6);
+  border-top-color: var(--gui-intent-primary, #8b5cf6);
   border-radius: 999px;
   animation: pg-spin 0.7s linear infinite;
 }
@@ -180,7 +180,7 @@ body {
 .pg-tabs {
   display: flex;
   border-bottom: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.25));
-  background: var(--gui-bg-subtle, rgba(148, 163, 184, 0.06));
+  background: var(--gui-bg-surface-hover, rgba(148, 163, 184, 0.06));
 }
 
 .pg-tab {
@@ -198,7 +198,7 @@ body {
 
 .pg-tab--active {
   color: var(--gui-text-default, #e2e8f0);
-  border-bottom-color: var(--gui-primary, #8b5cf6);
+  border-bottom-color: var(--gui-intent-primary, #8b5cf6);
 }
 
 /* ---- Code blocks (spec + payload) ---- */
@@ -239,7 +239,7 @@ body {
   tab-size: 2;
 }
 .pg-json:focus {
-  outline: 2px solid var(--gui-primary, #8b5cf6);
+  outline: 2px solid var(--gui-intent-primary, #8b5cf6);
   outline-offset: -2px;
 }
 
@@ -270,7 +270,7 @@ body {
   border: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.3));
   border-radius: 12px;
   overflow: hidden;
-  background: var(--gui-bg-subtle, #0f172a);
+  background: var(--gui-bg-surface-hover, #0f172a);
 }
 
 .request-preview__bar {
@@ -279,7 +279,7 @@ body {
   gap: 8px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.25));
-  background: color-mix(in srgb, var(--gui-bg-subtle, #0f172a) 80%, #6366f1 20%);
+  background: color-mix(in srgb, var(--gui-bg-surface-hover, #0f172a) 80%, var(--gui-intent-primary) 14%);
 }
 .request-preview__bar--curl {
   border-top: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.25));
@@ -344,11 +344,11 @@ body {
   font-weight: 600;
   font-size: 0.9rem;
   border-bottom: 1px solid var(--gui-border-default, rgba(148, 163, 184, 0.25));
-  background: var(--gui-bg-subtle, rgba(148, 163, 184, 0.06));
+  background: var(--gui-bg-surface-hover, rgba(148, 163, 184, 0.06));
 }
 .pg-payload__bar .material-icons {
   font-size: 20px;
-  color: var(--gui-primary, #8b5cf6);
+  color: var(--gui-intent-primary, #8b5cf6);
 }
 .pg-payload__hint {
   font-weight: 400;
@@ -363,7 +363,7 @@ body {
 }
 
 .pg-payload__code {
-  background: var(--gui-bg-subtle, #0f172a);
+  background: var(--gui-bg-surface-hover, #0f172a);
 }
 
 /* Material icon glyphs for GolemUI widgets that use them. */

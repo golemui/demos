@@ -44,3 +44,7 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 
 .angular
+
+ANTHROPIC_API_KEY
+.env
+.env.local

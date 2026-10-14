@@ -1,0 +1,17 @@
+{
+  "name": "@hotel/shared",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "forms": "tsx scripts/generate-forms.ts",
+    "test": "node --import tsx --test src/*.test.ts"
+  },
+  "devDependencies": {
+    "@golemui/gui-mcp": "2.0.0-rc.4",
+    "tsx": "^4.19.0"
+  }
+}
