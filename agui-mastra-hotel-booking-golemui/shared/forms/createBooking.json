@@ -1,0 +1,259 @@
+{
+  "$schema": "https://golemui.com/schemas/form.schema.json",
+  "form": [
+    {
+      "kind": "layout",
+      "type": "grid",
+      "props": {
+        "gap": "sm",
+        "direction": "row"
+      },
+      "children": [
+        {
+          "kind": "input",
+          "type": "datePicker",
+          "path": "dates.start",
+          "label": "Arrival",
+          "validator": {
+            "type": "string",
+            "required": true,
+            "messages": {
+              "invalid": "Arrival is required",
+              "required": "Arrival is required"
+            }
+          }
+        },
+        {
+          "kind": "input",
+          "type": "datePicker",
+          "path": "dates.end",
+          "label": "Departure",
+          "validator": {
+            "type": "string",
+            "required": true,
+            "messages": {
+              "invalid": "Departure is required",
+              "required": "Departure is required"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "input",
+      "type": "number",
+      "path": "guests",
+      "label": "Guests",
+      "validator": {
+        "type": "integer",
+        "required": true,
+        "minimum": 1,
+        "maximum": 12,
+        "messages": {
+          "invalid": "Guests is required",
+          "minimum": "Guests must be at least 1",
+          "maximum": "Guests must be at most 12"
+        }
+      },
+      "props": {
+        "hint": "Number of guests (rooms sleep up to 4)"
+      }
+    },
+    {
+      "kind": "input",
+      "type": "number",
+      "path": "rooms",
+      "label": "Rooms",
+      "validator": {
+        "type": "integer",
+        "required": true,
+        "minimum": 1,
+        "maximum": 3,
+        "messages": {
+          "invalid": "Rooms is required",
+          "minimum": "Rooms must be at least 1",
+          "maximum": "Rooms must be at most 3"
+        }
+      }
+    },
+    {
+      "kind": "input",
+      "type": "select",
+      "path": "board",
+      "label": "Board",
+      "validator": {
+        "type": "string",
+        "required": true,
+        "messages": {
+          "invalid": "Board is required",
+          "required": "Board is required"
+        }
+      },
+      "props": {
+        "hint": "Meal plan",
+        "options": [
+          {
+            "label": "Room only",
+            "value": "none"
+          },
+          {
+            "label": "Half board (+€10/night per guest)",
+            "value": "half"
+          },
+          {
+            "label": "Full board (+€20/night per guest)",
+            "value": "full"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "input",
+      "type": "select",
+      "path": "car",
+      "label": "Rental car",
+      "validator": {
+        "type": "string",
+        "required": true,
+        "messages": {
+          "invalid": "Rental car is required",
+          "required": "Rental car is required"
+        }
+      },
+      "props": {
+        "options": [
+          {
+            "label": "No car",
+            "value": "none"
+          },
+          {
+            "label": "Compact — 4 seats (+€25/night)",
+            "value": "compact"
+          },
+          {
+            "label": "SUV — 5 seats (+€30/night)",
+            "value": "suv"
+          },
+          {
+            "label": "Sports car — 2 seats (+€45/night)",
+            "value": "sport"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "layout",
+      "type": "grid",
+      "props": {
+        "gap": "sm"
+      },
+      "children": [
+        {
+          "kind": "input",
+          "type": "checkbox",
+          "path": "specialRequests.babyCrib",
+          "label": "Baby crib in the room"
+        },
+        {
+          "kind": "input",
+          "type": "checkbox",
+          "path": "specialRequests.accessibleRoom",
+          "label": "Step-free, accessible room"
+        },
+        {
+          "kind": "input",
+          "type": "select",
+          "path": "specialRequests.arrivalTime",
+          "label": "Expected arrival time",
+          "props": {
+            "options": [
+              {
+                "label": "Afternoon (15:00–18:00)",
+                "value": "afternoon"
+              },
+              {
+                "label": "Evening (18:00–22:00)",
+                "value": "evening"
+              },
+              {
+                "label": "Late night (after 22:00)",
+                "value": "late"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "input",
+          "type": "checkbox",
+          "path": "specialRequests.parking",
+          "label": "Reserve a parking space"
+        },
+        {
+          "kind": "input",
+          "type": "textinput",
+          "path": "specialRequests.licensePlate",
+          "label": "License plate",
+          "validator": {
+            "type": "string",
+            "maxLength": 12,
+            "messages": {
+              "maxLength": "License plate must be at most 12 characters"
+            }
+          }
+        },
+        {
+          "kind": "input",
+          "type": "select",
+          "path": "specialRequests.dietary",
+          "label": "Dietary needs",
+          "props": {
+            "options": [
+              {
+                "label": "None",
+                "value": "none"
+              },
+              {
+                "label": "Vegetarian",
+                "value": "vegetarian"
+              },
+              {
+                "label": "Vegan",
+                "value": "vegan"
+              },
+              {
+                "label": "Gluten-free",
+                "value": "gluten-free"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "input",
+          "type": "textarea",
+          "path": "specialRequests.notes",
+          "label": "Anything else?",
+          "validator": {
+            "type": "string",
+            "maxLength": 500,
+            "messages": {
+              "maxLength": "Anything else? must be at most 500 characters"
+            }
+          },
+          "props": {
+            "hint": "Anything else we should prepare",
+            "placeholder": "A quiet room, a birthday surprise…"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "action",
+      "type": "button",
+      "actionType": "submit",
+      "label": "Book a stay",
+      "props": {
+        "variant": "filled"
+      }
+    }
+  ]
+}

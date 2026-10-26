@@ -1,7 +1,8 @@
 name: shared-sync-check
 
-# Guarantees the committed src/_shared/ copies match /shared. Because StackBlitz
-# serves demos straight from the repo, stale shared code must never reach main.
+# Guarantees the committed copies of /shared (src/_shared/ and the hotel core)
+# match their source. Because StackBlitz serves demos straight from the repo,
+# stale shared code must never reach main.
 on:
   push:
     branches: [main]
@@ -17,11 +18,13 @@ jobs:
           node-version: 20
       - name: Regenerate shared files
         run: node scripts/sync-shared.mjs
-      - name: Fail if src/_shared is out of date
+      - name: Fail if a generated copy is out of date
         run: |
-          if ! git diff --quiet -- '*/src/_shared'; then
-            echo "::error::src/_shared is out of date. Run 'npm run sync' and commit the result."
-            git --no-pager diff -- '*/src/_shared'
+          paths=$(node scripts/sync-shared.mjs --paths)
+          if [ -n "$(git status --porcelain -- $paths)" ]; then
+            echo "::error::Copies of /shared are out of date. Run 'npm run sync' and commit the result."
+            git status --short -- $paths
+            git --no-pager diff -- $paths
             exit 1
           fi
-          echo "src/_shared is up to date."
+          echo "Copies of /shared are up to date."

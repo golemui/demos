@@ -1,0 +1,24 @@
+{
+  // Type-checks these sources as if they sat inside a hotel demo (and gives the
+  // editor the right settings). Imports that leave this folder — the generated
+  // forms and npm packages — resolve to agui-mastra-hotel-booking-golemui, so
+  // that demo must be installed. `@hotel/shared` resolves to ./index.ts.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"],
+    "typeRoots": ["../../agui-mastra-hotel-booking-golemui/node_modules/@types"],
+    "rootDirs": [".", "../../agui-mastra-hotel-booking-golemui"],
+    "paths": {
+      "@hotel/shared": ["./index.ts"],
+      "*": ["../../agui-mastra-hotel-booking-golemui/node_modules/*"]
+    }
+  },
+  "include": ["**/*.ts"]
+}
