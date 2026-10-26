@@ -1,5 +1,5 @@
 import { bookingProblems, nightsBetween, priceBooking, requestSchema } from '@hotel/shared';
-import type { AvailabilityRequest, BookingRequest, PaymentRequest, SchemaNode } from '@hotel/shared';
+import type { AvailabilityRequest, BookingRequest, BookingUpdate, PaymentRequest, SchemaNode } from '@hotel/shared';
 
 /**
  * The mocked hotel backend — implements the contract in `@hotel/shared` with
@@ -67,6 +67,36 @@ export function createBooking(body: unknown): Booking {
   return booking;
 }
 
+/** PATCH /bookings/{id}: change any createBooking fields while the booking is unpaid; repriced. */
+export function updateBooking(bookingId: string, body: unknown): Booking {
+  const booking = bookings.get(bookingId);
+  if (!booking) throw new ApiError(404, [`Booking ${bookingId} not found.`]);
+  if (booking.status === 'paid') throw new ApiError(409, [`Booking ${bookingId} is already paid and can't be changed.`]);
+  const changes = (body ?? {}) as BookingUpdate;
+  const problems = contractProblems(requestSchema('updateBooking'), changes);
+  if (problems.length > 0) throw new ApiError(422, problems);
+
+  const merged: BookingRequest = {
+    dates: changes.dates ?? booking.dates,
+    guests: changes.guests ?? booking.guests,
+    rooms: changes.rooms ?? booking.rooms,
+    board: changes.board ?? booking.board,
+    car: changes.car ?? booking.car,
+    ...(booking.specialRequests || changes.specialRequests
+      ? { specialRequests: { ...booking.specialRequests, ...changes.specialRequests } }
+      : {}),
+  };
+  const ruleProblems = bookingProblems(merged);
+  // Availability without counting this booking's own rooms.
+  const others = roomsTaken(merged.dates) - (overlaps(booking.dates, merged.dates) ? booking.rooms : 0);
+  if (ruleProblems.length === 0 && TOTAL_ROOMS - others < merged.rooms) ruleProblems.push('Not enough rooms left for those dates.');
+  if (ruleProblems.length > 0) throw new ApiError(422, ruleProblems);
+
+  const quote = priceBooking(merged);
+  Object.assign(booking, merged, { total: quote.total, nights: quote.nights });
+  return booking;
+}
+
 export function createPayment(body: unknown): Booking {
   const request = body as PaymentRequest;
   const problems = contractProblems(requestSchema('createPayment'), request);
@@ -85,9 +115,13 @@ export function listBookings(): Booking[] {
   return [...bookings.values()];
 }
 
+function overlaps(a: { start: string; end: string }, b: { start: string; end: string }): boolean {
+  return a.start < b.end && b.start < a.end;
+}
+
 function roomsTaken(dates: { start: string; end: string }): number {
   return listBookings()
-    .filter((booking) => booking.dates.start < dates.end && dates.start < booking.dates.end)
+    .filter((booking) => overlaps(booking.dates, dates))
     .reduce((sum, booking) => sum + booking.rooms, 0);
 }
 

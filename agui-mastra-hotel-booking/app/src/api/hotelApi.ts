@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { BookingRequest, PaymentRequest, SpecialRequests } from '@hotel/shared';
+import type { BookingRequest, BookingUpdate, PaymentRequest, SpecialRequests } from '@hotel/shared';
 
 /**
  * Browser client for the (mocked) hotel REST API. Every call is recorded so the
@@ -54,6 +54,7 @@ async function request<T>(method: string, path: string, body: unknown): Promise<
 
 export const hotelApi = {
   createBooking: (body: BookingRequest) => request<Booking>('POST', '/api/bookings', body),
+  updateBooking: (bookingId: string, body: BookingUpdate) => request<Booking>('PATCH', `/api/bookings/${encodeURIComponent(bookingId)}`, body),
   createPayment: (body: PaymentRequest) => request<Booking>('POST', '/api/payments', body),
 };
 

@@ -19,16 +19,17 @@ import { ASKABLE_OPERATIONS, hotelApi } from '../src/hotel-api.ts';
 
 type Overrides = NonNullable<Parameters<typeof generateFromOpenapi>[0]['overrides']>;
 
-const OVERRIDES: Record<string, Overrides> = {
-  createBooking: {
-    // Arrival and departure side by side, as calendar pickers; the 30-night cap
-    // and the departure-after-arrival rule are applied live by the app.
-    dates: { props: { direction: 'row' } },
-    'dates.start': { widget: 'datePicker' },
-    'dates.end': { widget: 'datePicker' },
-    'specialRequests.notes': { props: { placeholder: 'A quiet room, a birthday surprise…' } },
-  },
+const BOOKING_OVERRIDES: Overrides = {
+  // Arrival and departure side by side, as calendar pickers; the 30-night cap
+  // and the departure-after-arrival rule are applied live by the app.
+  dates: { props: { direction: 'row' } },
+  'dates.start': { widget: 'datePicker' },
+  'dates.end': { widget: 'datePicker' },
+  'specialRequests.notes': { props: { placeholder: 'A quiet room, a birthday surprise…' } },
 };
+
+// updateBooking's body has the same fields (all optional), so the same UI decisions.
+const OVERRIDES: Record<string, Overrides> = { createBooking: BOOKING_OVERRIDES, updateBooking: BOOKING_OVERRIDES };
 
 const outDir = resolve(dirname(fileURLToPath(import.meta.url)), '../forms');
 mkdirSync(outDir, { recursive: true });
@@ -83,6 +84,7 @@ function withMessages(widget: Widget): Widget {
   }
   if (validator.minimum !== undefined) messages.minimum = `${label} must be at least ${validator.minimum}`;
   if (validator.maximum !== undefined) messages.maximum = `${label} must be at most ${validator.maximum}`;
-  if (validator.maxLength !== undefined) messages.maxLength = `${label} must be at most ${validator.maxLength} characters`;
+  if (validator.maxLength !== undefined)
+    messages.maxLength = `${label} must be at most ${validator.maxLength} characters`;
   return Object.keys(messages).length > 0 ? { ...widget, validator: { ...validator, messages } } : widget;
 }

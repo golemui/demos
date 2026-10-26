@@ -14,6 +14,11 @@ type ConfirmResult =
   | { status: 'rejected' }
   | { status: 'error'; problems: string[] };
 
+type ConfirmArgs = BookingRequest & {
+  /** Set when the agent proposes a CHANGE to an existing unpaid booking. */
+  bookingId?: string;
+};
+
 /**
  * `confirm_booking` — the harness. The agent PROPOSES a createBooking request;
  * nothing happens until the guest approves it:
@@ -22,10 +27,12 @@ type ConfirmResult =
  *    pre-filled with the proposal and fully editable;
  *  - the price breakdown above it is host code (shared with the server),
  *    recomputed live on every edit — the LLM never does the math;
- *  - on Confirm, the APP calls POST /bookings, and the agent gets back the
+ *  - on Confirm, the APP calls POST /bookings — or PATCH /bookings/{id} when
+ *    the agent is changing an existing booking — and the agent gets back the
  *    server's booking plus a diff of what the guest changed.
  */
-export function ConfirmBookingSurface({ toolCallId, args, result, respond }: ToolSurfaceProps<BookingRequest>) {
+export function ConfirmBookingSurface({ toolCallId, args: rawArgs, result, respond }: ToolSurfaceProps<ConfirmArgs>) {
+  const { bookingId, ...args } = rawArgs;
   const [draft, setDraft] = useState<Partial<BookingRequest>>(args);
   const [submitting, setSubmitting] = useState(false);
 
@@ -35,7 +42,8 @@ export function ConfirmBookingSurface({ toolCallId, args, result, respond }: Too
       data: structuredClone(args),
       formName: `confirm-${toolCallId}`,
     }),
-    [args, toolCallId],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rawArgs, toolCallId],
   );
 
   const quote = priceBooking(draft);
@@ -50,7 +58,7 @@ export function ConfirmBookingSurface({ toolCallId, args, result, respond }: Too
     const approved = event.data as BookingRequest;
     setSubmitting(true);
     try {
-      const booking = await hotelApi.createBooking(approved);
+      const booking = bookingId ? await hotelApi.updateBooking(bookingId, approved) : await hotelApi.createBooking(approved);
       respond({
         status: 'booked',
         booking: { id: booking.id, total: booking.total, nights: booking.nights, specialRequests: booking.specialRequests },
@@ -61,13 +69,13 @@ export function ConfirmBookingSurface({ toolCallId, args, result, respond }: Too
     }
   }
 
-  if (result !== undefined) return <ConfirmDone result={result as ConfirmResult} />;
+  if (result !== undefined) return <ConfirmDone result={result as ConfirmResult} updated={Boolean(bookingId)} />;
 
   return (
     <div className="surface surface--review">
       <div className="surface__header">
         <span className="surface__badge surface__badge--warn">Approval required</span>
-        <code className="surface__meta">confirm_booking → POST /bookings</code>
+        <code className="surface__meta">confirm_booking → {bookingId ? `PATCH /bookings/${bookingId}` : 'POST /bookings'}</code>
       </div>
 
       <div className="quote" aria-live="polite">
@@ -113,7 +121,7 @@ function reviewFields(proposal: BookingRequest): string[] {
   return [...CORE_FIELDS, ...Object.keys(proposal.specialRequests ?? {}).map((key) => `specialRequests.${key}`)];
 }
 
-function ConfirmDone({ result }: { result: ConfirmResult }) {
+function ConfirmDone({ result, updated }: { result: ConfirmResult; updated: boolean }) {
   if (result.status === 'rejected') {
     return <div className="surface surface--done surface--muted">✕ Booking proposal rejected</div>;
   }
@@ -123,7 +131,7 @@ function ConfirmDone({ result }: { result: ConfirmResult }) {
   return (
     <div className="surface surface--done">
       <div className="surface__done-title">
-        ✓ Booked <strong>{result.booking.id}</strong> · {euros(result.booking.total)}
+        ✓ {updated ? 'Updated' : 'Booked'} <strong>{result.booking.id}</strong> · {euros(result.booking.total)}
       </div>
       {result.booking.specialRequests && describeSpecialRequests(result.booking.specialRequests).length > 0 && (
         <div className="surface__requests">

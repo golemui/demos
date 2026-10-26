@@ -11,6 +11,84 @@
  *
  * Change a field here, regenerate, and the UI, the agent and the API move together.
  */
+/** The createBooking request body. Extracted so updateBooking can reuse its fields. */
+const bookingRequestSchema = {
+  type: 'object',
+  required: ['dates', 'guests', 'rooms', 'board', 'car'],
+  properties: {
+    dates: {
+      type: 'object',
+      title: 'Stay',
+      description: 'Arrival and departure dates (at most 30 nights)',
+      required: ['start', 'end'],
+      properties: {
+        start: { type: 'string', format: 'date', title: 'Arrival' },
+        end: { type: 'string', format: 'date', title: 'Departure' },
+      },
+    },
+    guests: {
+      type: 'integer',
+      title: 'Guests',
+      description: 'Number of guests (rooms sleep up to 4)',
+      minimum: 1,
+      maximum: 12,
+    },
+    rooms: { type: 'integer', title: 'Rooms', minimum: 1, maximum: 3 },
+    board: {
+      title: 'Board',
+      description: 'Meal plan',
+      oneOf: [
+        { const: 'none', title: 'Room only' },
+        { const: 'half', title: 'Half board (+€10/night per guest)' },
+        { const: 'full', title: 'Full board (+€20/night per guest)' },
+      ],
+    },
+    car: {
+      title: 'Rental car',
+      oneOf: [
+        { const: 'none', title: 'No car' },
+        { const: 'compact', title: 'Compact — 4 seats (+€25/night)' },
+        { const: 'suv', title: 'SUV — 5 seats (+€30/night)' },
+        { const: 'sport', title: 'Sports car — 2 seats (+€45/night)' },
+      ],
+    },
+    specialRequests: {
+      type: 'object',
+      title: 'Special requests',
+      description: 'Optional — only what the guest needs',
+      properties: {
+        babyCrib: { type: 'boolean', title: 'Baby crib in the room' },
+        accessibleRoom: { type: 'boolean', title: 'Step-free, accessible room' },
+        arrivalTime: {
+          title: 'Expected arrival time',
+          oneOf: [
+            { const: 'afternoon', title: 'Afternoon (15:00–18:00)' },
+            { const: 'evening', title: 'Evening (18:00–22:00)' },
+            { const: 'late', title: 'Late night (after 22:00)' },
+          ],
+        },
+        parking: { type: 'boolean', title: 'Reserve a parking space' },
+        licensePlate: { type: 'string', title: 'License plate', maxLength: 12 },
+        dietary: {
+          title: 'Dietary needs',
+          oneOf: [
+            { const: 'none', title: 'None' },
+            { const: 'vegetarian', title: 'Vegetarian' },
+            { const: 'vegan', title: 'Vegan' },
+            { const: 'gluten-free', title: 'Gluten-free' },
+          ],
+        },
+        notes: {
+          type: 'string',
+          title: 'Anything else?',
+          description: 'Anything else we should prepare',
+          maxLength: 500,
+        },
+      },
+    },
+  },
+} as const;
+
 export const hotelApi = {
   openapi: '3.1.0',
   info: { title: 'Hotel Aurora API', version: '1.0.0' },
@@ -29,6 +107,25 @@ export const hotelApi = {
             content: { 'application/json': { schema: { $ref: '#/components/schemas/Booking' } } },
           },
           '422': { description: 'The request breaks a business rule' },
+        },
+      },
+    },
+    '/bookings/{bookingId}': {
+      patch: {
+        operationId: 'updateBooking',
+        summary: 'Change a booking before it is paid',
+        parameters: [{ name: 'bookingId', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/BookingUpdate' } } },
+        },
+        responses: {
+          '200': {
+            description: 'Booking updated and repriced',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Booking' } } },
+          },
+          '409': { description: 'The booking is already paid' },
+          '422': { description: 'The change breaks a business rule' },
         },
       },
     },
@@ -57,81 +154,12 @@ export const hotelApi = {
   },
   components: {
     schemas: {
-      BookingRequest: {
+      BookingRequest: bookingRequestSchema,
+      BookingUpdate: {
         type: 'object',
-        required: ['dates', 'guests', 'rooms', 'board', 'car'],
-        properties: {
-          dates: {
-            type: 'object',
-            title: 'Stay',
-            description: 'Arrival and departure dates (at most 30 nights)',
-            required: ['start', 'end'],
-            properties: {
-              start: { type: 'string', format: 'date', title: 'Arrival' },
-              end: { type: 'string', format: 'date', title: 'Departure' },
-            },
-          },
-          guests: {
-            type: 'integer',
-            title: 'Guests',
-            description: 'Number of guests (rooms sleep up to 4)',
-            minimum: 1,
-            maximum: 12,
-          },
-          rooms: { type: 'integer', title: 'Rooms', minimum: 1, maximum: 3 },
-          board: {
-            title: 'Board',
-            description: 'Meal plan',
-            oneOf: [
-              { const: 'none', title: 'Room only' },
-              { const: 'half', title: 'Half board (+€10/night per guest)' },
-              { const: 'full', title: 'Full board (+€20/night per guest)' },
-            ],
-          },
-          car: {
-            title: 'Rental car',
-            oneOf: [
-              { const: 'none', title: 'No car' },
-              { const: 'compact', title: 'Compact — 4 seats (+€25/night)' },
-              { const: 'suv', title: 'SUV — 5 seats (+€30/night)' },
-              { const: 'sport', title: 'Sports car — 2 seats (+€45/night)' },
-            ],
-          },
-          specialRequests: {
-            type: 'object',
-            title: 'Special requests',
-            description: 'Optional — only what the guest needs',
-            properties: {
-              babyCrib: { type: 'boolean', title: 'Baby crib in the room' },
-              accessibleRoom: { type: 'boolean', title: 'Step-free, accessible room' },
-              arrivalTime: {
-                title: 'Expected arrival time',
-                oneOf: [
-                  { const: 'afternoon', title: 'Afternoon (15:00–18:00)' },
-                  { const: 'evening', title: 'Evening (18:00–22:00)' },
-                  { const: 'late', title: 'Late night (after 22:00)' },
-                ],
-              },
-              parking: { type: 'boolean', title: 'Reserve a parking space' },
-              licensePlate: { type: 'string', title: 'License plate', maxLength: 12 },
-              dietary: {
-                title: 'Dietary needs',
-                oneOf: [
-                  { const: 'none', title: 'None' },
-                  { const: 'vegetarian', title: 'Vegetarian' },
-                  { const: 'vegan', title: 'Vegan' },
-                  { const: 'gluten-free', title: 'Gluten-free' },
-                ],
-              },
-              notes: {
-                type: 'string',
-                title: 'Anything else?',
-                description: 'Anything else we should prepare',
-                maxLength: 500,
-              },
-            },
-          },
-        },
+        title: 'Booking changes',
+        description: 'Any createBooking fields to change. Only before the booking is paid.',
+        properties: bookingRequestSchema.properties,
       },
       Booking: {
         type: 'object',
@@ -171,7 +199,7 @@ export const hotelApi = {
 } as const;
 
 /** The operations the agent may collect input for with `ask_user`. */
-export const ASKABLE_OPERATIONS = ['createBooking'] as const;
+export const ASKABLE_OPERATIONS = ['createBooking', 'updateBooking'] as const;
 export type AskableOperation = (typeof ASKABLE_OPERATIONS)[number];
 
 export type Board = 'none' | 'half' | 'full';
@@ -196,6 +224,9 @@ export interface SpecialRequests {
   dietary?: 'none' | 'vegetarian' | 'vegan' | 'gluten-free';
   notes?: string;
 }
+
+/** The updateBooking (PATCH) body: any createBooking fields. */
+export type BookingUpdate = Partial<BookingRequest>;
 
 export interface AvailabilityRequest {
   dates: { start: string; end: string };

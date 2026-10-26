@@ -1,4 +1,5 @@
-import { FRONTEND_TOOLS } from '@hotel/shared';
+import { useState } from 'react';
+import { FRONTEND_TOOLS, type Variant } from '@hotel/shared';
 import { DemoShell } from './_shared/DemoShell';
 import { createAgentStore } from './agui/agentStore';
 import { ChatPanel } from './agui/ChatPanel';
@@ -9,8 +10,15 @@ import { AskUserSurface } from './tools/AskUserSurface';
 import { ConfirmBookingSurface } from './tools/ConfirmBookingSurface';
 import { PaymentSurface } from './tools/PaymentSurface';
 
-/** The AG-UI endpoint (proxied by Vite to the Mastra server) + the tools the browser implements. */
-const agent = createAgentStore('/agui', FRONTEND_TOOLS);
+/**
+ * One AG-UI endpoint per variant (proxied by Vite to the Mastra server). Only
+ * the GolemUI variant declares frontend tools; the pure variant's only UI tool
+ * is render_a2ui, which the server-side A2UI middleware adds.
+ */
+const stores = {
+  pure: createAgentStore('/agui/pure', []),
+  golem: createAgentStore('/agui/golem', FRONTEND_TOOLS),
+};
 
 /** Which component answers which frontend tool. Everything else is a server tool. */
 const surfaces: ToolSurfaceRegistry = {
@@ -25,10 +33,17 @@ const SUGGESTIONS = [
   'I need a room',
 ];
 
+const VARIANTS: Array<{ id: Variant; label: string; blurb: string }> = [
+  { id: 'pure', label: 'A2UI', blurb: 'Pure A2UI: the agent designs every form with the basic catalog and relays the data to the API.' },
+  { id: 'golem', label: 'GolemUI', blurb: 'GolemUI: the agent only decides what to ask; the forms come from the hotel’s OpenAPI.' },
+];
+
 export default function App() {
+  const [active, setActive] = useState<Variant>('golem');
+
   function restart() {
-    agent.reset();
-    apiLog.clear();
+    stores[active].reset();
+    if (active === 'golem') apiLog.clear();
   }
 
   return (
@@ -36,14 +51,35 @@ export default function App() {
       <div className="layout">
         <div className="layout__chat">
           <div className="layout__toolbar">
-            <span>Forms generated from the hotel's OpenAPI · the agent only decides what to ask</span>
+            <div className="variant-tabs" role="tablist" aria-label="Variant">
+              {VARIANTS.map((variant) => (
+                <button
+                  key={variant.id}
+                  role="tab"
+                  aria-selected={active === variant.id}
+                  className={active === variant.id ? 'is-active' : ''}
+                  onClick={() => setActive(variant.id)}
+                >
+                  {variant.label}
+                </button>
+              ))}
+            </div>
             <button type="button" className="button button--ghost" onClick={restart}>
               <span className="material-icons">restart_alt</span> New chat
             </button>
           </div>
-          <ChatPanel store={agent} surfaces={surfaces} suggestions={SUGGESTIONS} />
+          {VARIANTS.map((variant) => (
+            <ChatPanel
+              key={variant.id}
+              hidden={active !== variant.id}
+              store={stores[variant.id]}
+              surfaces={surfaces}
+              suggestions={SUGGESTIONS}
+              blurb={variant.blurb}
+            />
+          ))}
         </div>
-        <Inspector store={agent} />
+        <Inspector store={stores[active]} variant={active} />
       </div>
     </DemoShell>
   );

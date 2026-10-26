@@ -1,4 +1,5 @@
 import createBookingForm from '../forms/createBooking.json' with { type: 'json' };
+import updateBookingForm from '../forms/updateBooking.json' with { type: 'json' };
 import { hotelApi, type AskableOperation } from './hotel-api';
 import { today } from './pricing';
 
@@ -33,6 +34,7 @@ export interface FormDefinition {
 
 const GENERATED: Record<AskableOperation, FormDefinition> = {
   createBooking: createBookingForm as FormDefinition,
+  updateBooking: updateBookingForm as FormDefinition,
 };
 
 /** Form event every input emits on change, so the host can recompute live summaries. */
@@ -84,7 +86,7 @@ function wire(widget: Widget, operation: AskableOperation): Widget {
   if (widget.children) return { ...widget, children: widget.children.map((child) => wire(child, operation)) };
   if (widget.kind !== 'input') return widget;
 
-  if (operation === 'createBooking' && fieldOf(widget.path) === 'dates') {
+  if (fieldOf(widget.path) === 'dates') {
     return { ...widget, props: { ...widget.props, minDate: today() }, on: { change: DATES_CHANGED_EVENT } };
   }
   return { ...widget, on: { change: CHANGED_EVENT } };
@@ -146,9 +148,8 @@ type Operation = AskableOperation | 'checkAvailability' | 'createPayment';
 
 /** The JSON Schema of an operation's request body, with the $ref resolved. */
 export function requestSchema(operation: Operation): SchemaNode {
-  for (const pathItem of Object.values(hotelApi.paths)) {
-    const op = (pathItem as { post?: { operationId: string; requestBody: { content: Record<string, { schema: SchemaNode }> } } }).post;
-    if (op?.operationId !== operation) continue;
+  for (const op of operations()) {
+    if (op.operationId !== operation) continue;
     const ref = op.requestBody.content['application/json'].schema.$ref ?? '';
     const name = ref.split('/').pop() as keyof typeof hotelApi.components.schemas;
     return hotelApi.components.schemas[name] as unknown as SchemaNode;
@@ -157,20 +158,33 @@ export function requestSchema(operation: Operation): SchemaNode {
 }
 
 export function operationSummary(operation: Operation): string {
-  for (const pathItem of Object.values(hotelApi.paths)) {
-    const op = (pathItem as { post?: { operationId: string; summary: string } }).post;
-    if (op?.operationId === operation) return op.summary;
-  }
-  return operation;
+  return operations().find((op) => op.operationId === operation)?.summary ?? operation;
+}
+
+type OperationObject = {
+  operationId: string;
+  summary: string;
+  requestBody: { content: Record<string, { schema: SchemaNode }> };
+};
+
+/** Every operation of the contract, whatever its HTTP method. */
+function operations(): OperationObject[] {
+  return Object.values(hotelApi.paths).flatMap((pathItem) => Object.values(pathItem) as OperationObject[]);
 }
 
 /** Every askable field of an operation: top-level fields, and groups expanded to "group.field". */
-export function operationFields(operation: AskableOperation): Array<{ name: string; field: SchemaNode; required: boolean }> {
+export function operationFields(
+  operation: AskableOperation,
+): Array<{ name: string; field: SchemaNode; required: boolean }> {
   const schema = requestSchema(operation);
   const required = new Set(schema.required ?? []);
   return Object.entries(schema.properties ?? {}).flatMap(([name, field]) =>
     isGroup(field)
-      ? Object.entries(field.properties ?? {}).map(([sub, subField]) => ({ name: `${name}.${sub}`, field: subField, required: false }))
+      ? Object.entries(field.properties ?? {}).map(([sub, subField]) => ({
+          name: `${name}.${sub}`,
+          field: subField,
+          required: false,
+        }))
       : [{ name, field, required: required.has(name) }],
   );
 }
@@ -186,7 +200,13 @@ function describeField(field: SchemaNode): string {
   const parts = [field.title ?? ''];
   if (field.oneOf) parts.push(`one of ${field.oneOf.map((o) => `"${o.const}"`).join(' | ')}`);
   else if (field.type === 'object' && field.properties) {
-    parts.push(`{ ${Object.keys(field.properties).map((key) => `"${key}": ${field.properties![key].format === 'date' ? 'YYYY-MM-DD' : field.properties![key].type}`).join(', ')} }`);
+    parts.push(
+      `{ ${Object.keys(field.properties)
+        .map(
+          (key) => `"${key}": ${field.properties![key].format === 'date' ? 'YYYY-MM-DD' : field.properties![key].type}`,
+        )
+        .join(', ')} }`,
+    );
   } else if (field.type) {
     const range = field.minimum !== undefined ? ` ${field.minimum}–${field.maximum}` : '';
     parts.push(`${field.type}${range}`);

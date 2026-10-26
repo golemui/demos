@@ -37,7 +37,7 @@ export function AskUserSurface({ toolCallId, args, result, respond }: ToolSurfac
   }
 
   function onFormEvent(event: FormEvent) {
-    if (operation === 'createBooking') handleBookingFormEvent(event);
+    handleBookingFormEvent(event); // both operations are bookings: same dates cap and rules
   }
 
   return (

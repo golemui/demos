@@ -119,6 +119,65 @@ test('ask what is missing → availability → special requests → review → p
   assert.equal(service.listBookings().find((b) => b.id === booking.id)?.status, 'paid');
 });
 
+test('closing the checkout → change the booking (updateBooking, same id) → pay the new total', { timeout: 60_000 }, async () => {
+  let history: Message[] = [{ id: 'u1', role: 'user', content: 'Book a room for 2 people next week, half board' }];
+
+  let turn = await run(history);
+  let call = turn.calls[0];
+  assert.equal(call.name, 'ask_user');
+  const prefill = call.args.prefill as { dates: { start: string; end: string } };
+  history = answer(history, turn.text, call, { dates: prefill.dates, rooms: 1, car: 'none' });
+
+  // Availability (server tool) then the proposal, in one run.
+  turn = await run(history);
+  assert.deepEqual(turn.calls.map((c) => c.name), ['check_availability', 'confirm_booking']);
+  const [availability, confirm] = turn.calls;
+  const created = service.createBooking(confirm.args);
+  history = [
+    ...history,
+    {
+      id: crypto.randomUUID(),
+      role: 'assistant',
+      content: turn.text,
+      toolCalls: turn.calls.map((c) => ({ id: c.id, type: 'function' as const, function: { name: c.name, arguments: JSON.stringify(c.args) } })),
+    },
+    { id: crypto.randomUUID(), role: 'tool', toolCallId: availability.id, content: JSON.stringify({ available: true, roomsLeft: 6, nights: 7 }) },
+    { id: crypto.randomUUID(), role: 'tool', toolCallId: confirm.id, content: JSON.stringify({ status: 'booked', booking: { id: created.id, total: created.total, nights: created.nights }, humanChanges: [] }) },
+  ];
+
+  // The guest closes the checkout: the agent offers to change the booking.
+  turn = await run(history);
+  call = turn.calls[0];
+  assert.equal(call.name, 'collect_payment');
+  history = answer(history, turn.text, call, { status: 'cancelled' });
+  turn = await run(history);
+  assert.equal(turn.calls.length, 0);
+  assert.match(turn.text, /change anything/);
+
+  // "I want to rent a car" → ask_user(updateBooking) with just that field.
+  history = [...history, { id: crypto.randomUUID(), role: 'assistant', content: turn.text }, { id: crypto.randomUUID(), role: 'user', content: 'Yes, I want to rent a car please' }];
+  turn = await run(history);
+  call = turn.calls[0];
+  assert.deepEqual({ name: call.name, operation: call.args.operation, fields: call.args.fields }, { name: 'ask_user', operation: 'updateBooking', fields: ['car'] });
+  history = answer(history, turn.text, call, { car: 'suv' });
+
+  // The full updated proposal, WITH the bookingId: the app PATCHes, it doesn't create.
+  turn = await run(history);
+  call = turn.calls[0];
+  assert.equal(call.name, 'confirm_booking');
+  assert.equal(call.args.bookingId, created.id);
+  assert.equal(call.args.car, 'suv');
+  const { bookingId, ...proposal } = call.args;
+  const before = created.total; // the mock API updates the stored booking in place
+  const updated = service.updateBooking(bookingId as string, proposal);
+  assert.equal(updated.id, created.id);
+  assert.equal(updated.total, before + 7 * 30, 'SUV adds €30/night');
+  history = answer(history, turn.text, call, { status: 'booked', booking: { id: updated.id, total: updated.total, nights: updated.nights }, humanChanges: [] });
+
+  turn = await run(history);
+  assert.deepEqual(turn.calls[0], { ...turn.calls[0], name: 'collect_payment', args: { bookingId: created.id, amount: updated.total } });
+});
+
 test('the mock API enforces the contract and business rules', () => {
   assert.throws(() => service.createBooking({ guests: 2 }), /required/);
   assert.throws(
@@ -142,4 +201,10 @@ test('the mock API enforces the contract and business rules', () => {
     /specialRequests\.dietary/,
   );
   assert.equal(service.checkAvailability({ dates: { start: '2099-05-01', end: '2099-05-03' }, rooms: 2 }).available, true);
+
+  const booking = service.createBooking({ dates: { start: '2099-06-01', end: '2099-06-03' }, guests: 2, rooms: 1, board: 'none', car: 'none' });
+  assert.throws(() => service.updateBooking(booking.id, { guests: 9 }), /at least 3 rooms/);
+  assert.throws(() => service.updateBooking('AUR-0', { car: 'suv' }), /not found/);
+  service.createPayment({ bookingId: booking.id, amount: booking.total, brand: 'visa', last4: '4242' });
+  assert.throws(() => service.updateBooking(booking.id, { car: 'suv' }), /already paid/);
 });

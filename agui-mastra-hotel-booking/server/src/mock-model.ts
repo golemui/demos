@@ -12,7 +12,7 @@ import type { BookingRequest, SpecialRequests } from '@hotel/shared';
 
 /**
  * MOCK_AGENT=1 — a scripted language model, for running the demo without an
- * API key (or without Wi-Fi on stage) and for the E2E test.
+ * API key (or offline) and for the E2E test.
  *
  * Only the MODEL is fake: it plugs into the real Mastra agent, so tool
  * execution, the AG-UI bridge and the browser all run the production path. It
@@ -74,11 +74,24 @@ function nextTurn(prompt: PromptMessage[]): Turn {
     .join('\n');
   const said = parseRequest(userText);
   const results = toolResults(prompt);
+  const booked = bookedState(results);
 
   if (last.role !== 'tool') {
     // A (new) user message. Once the flow is done, just chat.
-    if (results.some((result) => result.name === COLLECT_PAYMENT_TOOL.name)) {
+    if (results.some((result) => result.name === COLLECT_PAYMENT_TOOL.name && (result.value as { status?: string }).status === 'paid')) {
       return { text: 'Anything else I can help you with? Your booking is all set.' };
+    }
+    // A booking exists but isn't paid: the guest is asking for a change.
+    if (booked) {
+      const change = requestedChanges(lastUserText(prompt));
+      if (change.fields.length === 0) return { text: 'Sure — what would you like to change? The dates, guests, board or a rental car?' };
+      return {
+        text: "Of course — let's update your booking.",
+        tool: {
+          name: ASK_USER_TOOL.name,
+          args: { operation: 'updateBooking', fields: change.fields, prefill: change.prefill, intro: `Change booking ${booked.id}`, submitLabel: 'Review the change' },
+        },
+      };
     }
     return askForBooking(said, suggestedDates(userText));
   }
@@ -86,6 +99,15 @@ function nextTurn(prompt: PromptMessage[]): Turn {
   const latest = results[results.length - 1];
   switch (latest.name) {
     case ASK_USER_TOOL.name: {
+      if ((latest.args as { operation?: string }).operation === 'updateBooking' && booked) {
+        // The changed fields over the booking as it stands → review, which PATCHes the same booking.
+        const { specialRequests, ...rest } = latest.value as Partial<BookingRequest>;
+        const proposal = { ...booked.request, ...rest, ...(specialRequests ? { specialRequests: { ...booked.request.specialRequests, ...specialRequests } } : {}) };
+        return {
+          text: `Here is booking ${booked.id} with your change — check the new price.`,
+          tool: { name: CONFIRM_BOOKING_TOOL.name, args: { ...proposal, bookingId: booked.id } as unknown as Record<string, unknown> },
+        };
+      }
       const collected = collectedBooking(said, results);
       if (missingFields(collected).length > 0) return askForBooking(collected, suggestedDates(userText));
       // Special requests answered → everything is known: propose the booking.
@@ -133,15 +155,20 @@ function nextTurn(prompt: PromptMessage[]): Turn {
       }
       const changes = (value.humanChanges ?? []).map((change) => `${change.path} → ${format(change.approved)}`);
       const ack = changes.length > 0 ? `I've applied your changes (${changes.join(', ')}). ` : '';
+      const updated = Boolean((latest.args as { bookingId?: string }).bookingId);
       return {
-        text: `${ack}Booking ${value.booking.id} is reserved — €${value.booking.total.toFixed(2)} in total. Last step, the payment:`,
+        text: updated
+          ? `${ack}Booking ${value.booking.id} is updated — €${value.booking.total.toFixed(2)} in total now. Here is the payment again:`
+          : `${ack}Booking ${value.booking.id} is reserved — €${value.booking.total.toFixed(2)} in total. Last step, the payment:`,
         tool: { name: COLLECT_PAYMENT_TOOL.name, args: { bookingId: value.booking.id, amount: value.booking.total } },
       };
     }
 
     case COLLECT_PAYMENT_TOOL.name: {
       const value = latest.value as { status: string; brand?: string; last4?: string };
-      if (value.status !== 'paid') return { text: 'The checkout was closed. Would you like to try again?' };
+      if (value.status !== 'paid') {
+        return { text: 'No problem — would you like to change anything in your booking before paying? The dates, guests, board or a rental car?' };
+      }
       const requests = askedSpecialRequests(results) ? ' Your special requests are saved with the booking.' : '';
       return { text: `Payment received on your ${value.brand} ending ${value.last4}.${requests} See you at Hotel Aurora!` };
     }
@@ -238,6 +265,46 @@ function collectedBooking(said: Partial<BookingRequest>, results: ToolResult[]):
     if (specialRequests) collected.specialRequests = { ...collected.specialRequests, ...specialRequests };
   }
   return collected;
+}
+
+/**
+ * The latest booking the app created or updated (confirm_booking → booked):
+ * the proposal with the guest's own edits in the review applied.
+ */
+function bookedState(results: ToolResult[]): { id: string; request: BookingRequest } | undefined {
+  const confirmed = results.filter((result) => result.name === CONFIRM_BOOKING_TOOL.name && (result.value as { status?: string }).status === 'booked').at(-1);
+  if (!confirmed) return undefined;
+  const { bookingId: _id, ...proposal } = confirmed.args as BookingRequest & { bookingId?: string };
+  const value = confirmed.value as { booking: { id: string }; humanChanges?: Array<{ path: string; approved: unknown }> };
+  const request = structuredClone(proposal) as BookingRequest;
+  for (const change of value.humanChanges ?? []) setPath(request as unknown as Record<string, unknown>, change.path, change.approved);
+  return { id: value.booking.id, request };
+}
+
+function setPath(target: Record<string, unknown>, path: string, value: unknown): void {
+  const keys = path.split('.');
+  let node = target;
+  for (const key of keys.slice(0, -1)) node = (node[key] ??= {}) as Record<string, unknown>;
+  node[keys[keys.length - 1]] = value;
+}
+
+/** Which booking fields the guest asks to change, from their message. */
+function requestedChanges(text: string): { fields: string[]; prefill: Partial<BookingRequest> } {
+  const fields: string[] = [];
+  const prefill: Partial<BookingRequest> = {};
+  if (/\bcar\b|coche|\bsuv\b|sports? car|compact|rental/i.test(text)) {
+    fields.push('car');
+    prefill.car = /suv/i.test(text) ? 'suv' : /sport/i.test(text) ? 'sport' : 'compact';
+  }
+  if (/board|pensi[oó]n|breakfast|meal/i.test(text)) fields.push('board');
+  if (/date|night|fecha|noche/i.test(text)) fields.push('dates');
+  if (/guest|people|persona|room|habitaci/i.test(text)) fields.push('guests', 'rooms');
+  return { fields, prefill };
+}
+
+function lastUserText(prompt: PromptMessage[]): string {
+  const user = prompt.filter((message) => message.role === 'user').at(-1);
+  return user ? parts(user).filter((part) => part.type === 'text').map((part) => part.text ?? '').join('\n') : '';
 }
 
 function askedSpecialRequests(results: ToolResult[]): boolean {

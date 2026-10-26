@@ -513,3 +513,131 @@
   white-space: nowrap;
   opacity: 0.8;
 }
+
+/* ===================== Pure A2UI variant ===================== */
+
+.chat[hidden] {
+  display: none;
+}
+
+.variant-tabs {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 999px;
+  background: var(--gui-bg-default);
+  border: 1px solid var(--gui-border-default);
+}
+.variant-tabs button {
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--gui-text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.variant-tabs button.is-active {
+  background: var(--gui-intent-primary);
+  color: var(--gui-intent-primary-text, #fff);
+}
+
+/* A2UI basic components on GolemUI's Clay tokens, so both variants share one look.
+   Set on the frame (not :root): the renderer's own defaults live in an adopted
+   stylesheet on :root, which would win a tie. */
+.a2ui-frame {
+  --a2ui-color-primary: var(--gui-intent-primary);
+  --a2ui-color-primary-hover: color-mix(in srgb, var(--gui-intent-primary) 85%, black);
+  --a2ui-color-primary-light: color-mix(in srgb, var(--gui-intent-primary) 30%, transparent);
+  --a2ui-color-primary-dark: color-mix(in srgb, var(--gui-intent-primary) 80%, black);
+  --a2ui-color-on-primary: var(--gui-intent-primary-text, #fff);
+  --a2ui-color-secondary: var(--gui-bg-surface);
+  --a2ui-color-secondary-hover: var(--gui-bg-surface-hover);
+  --a2ui-color-on-secondary: var(--gui-text-default);
+  --a2ui-color-surface: var(--gui-bg-surface);
+  --a2ui-color-background: var(--gui-bg-default);
+  --a2ui-color-on-surface: var(--gui-text-default);
+  --a2ui-color-on-background: var(--gui-text-default);
+  --a2ui-text-color-text: var(--gui-text-default);
+  --a2ui-text-caption-color: var(--gui-text-secondary);
+  --a2ui-color-border: var(--gui-border-default);
+  --a2ui-color-input: var(--gui-bg-default);
+  --a2ui-color-on-input: var(--gui-text-default);
+  --a2ui-color-error: var(--gui-intent-error);
+  --a2ui-textfield-color-error: var(--gui-intent-error);
+  --a2ui-checkbox-color-error: var(--gui-intent-error);
+  --a2ui-textfield-color-border-focus: var(--gui-border-focus, var(--gui-intent-primary));
+  --a2ui-datetimeinput-color: var(--gui-text-default);
+  --a2ui-slider-thumb-color: var(--gui-intent-primary);
+  --a2ui-border-radius: 10px;
+  --a2ui-font-family: inherit;
+  width: min(560px, 100%);
+}
+.a2ui-frame--answered {
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
+
+.action-chip {
+  align-self: flex-end;
+  max-width: 78%;
+  font-size: 12.5px;
+  color: var(--gui-text-secondary);
+}
+.action-chip summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gui-intent-primary) 40%, var(--gui-border-default));
+  cursor: pointer;
+  list-style: none;
+}
+.action-chip summary .material-icons {
+  font-size: 16px;
+  color: var(--gui-intent-primary);
+}
+.action-chip pre {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--gui-bg-default);
+  border: 1px solid var(--gui-border-default);
+  font-size: 11.5px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.notice-chip {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gui-intent-warning, #d97706) 14%, transparent);
+  color: var(--gui-intent-warning, #b45309);
+  font-size: 12.5px;
+}
+.notice-chip .material-icons {
+  font-size: 16px;
+}
+
+.inspector__summary {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--gui-border-default);
+  font-size: 12.5px;
+  color: var(--gui-text-secondary);
+}
+.inspector__summary strong {
+  color: var(--gui-text-default);
+  font-variant-numeric: tabular-nums;
+}
+.api-call__by {
+  margin: 2px 0 4px;
+  font-size: 11.5px;
+  color: var(--gui-text-secondary);
+}
