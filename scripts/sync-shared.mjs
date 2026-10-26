@@ -61,6 +61,9 @@ const HOTEL_DEMOS = {
   'agui-mastra-hotel-booking-compare': [...HOTEL_CORE, ...HOTEL_FORMS],
   'agui-mastra-hotel-booking-a2ui': HOTEL_CORE,
   'agui-mastra-hotel-booking-golemui': [...HOTEL_CORE, ...HOTEL_FORMS],
+  'genkit-hotel-booking-compare': [...HOTEL_CORE, ...HOTEL_FORMS],
+  'genkit-hotel-booking-a2ui': HOTEL_CORE,
+  'genkit-hotel-booking-golemui': [...HOTEL_CORE, ...HOTEL_FORMS],
 };
 
 const banner = (source) =>

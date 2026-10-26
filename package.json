@@ -7,7 +7,7 @@
   "scripts": {
     "sync": "node scripts/sync-shared.mjs",
     "prepare": "git config core.hooksPath .githooks",
-    "hotel:forms": "npm run forms --prefix agui-mastra-hotel-booking-compare && npm run forms --prefix agui-mastra-hotel-booking-golemui",
+    "hotel:forms": "npm run forms --prefix agui-mastra-hotel-booking-compare && npm run forms --prefix agui-mastra-hotel-booking-golemui && npm run forms --prefix genkit-hotel-booking-compare && npm run forms --prefix genkit-hotel-booking-golemui",
     "hotel:typecheck": "agui-mastra-hotel-booking-golemui/node_modules/.bin/tsc -p shared/hotel"
   }
 }

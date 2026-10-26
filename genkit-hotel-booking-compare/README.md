@@ -1,0 +1,177 @@
+# Hotel Concierge, compared — A2UI vs A2UI + GolemUI on Genkit
+
+> The same booking agent twice, side by side. In one variant the agent composes every form out of A2UI's basic components. In the other it only names the API operation and the fields, and GolemUI renders forms generated from the hotel's OpenAPI.
+
+Each variant also exists as its own, simpler demo:
+[genkit-hotel-booking-a2ui](../genkit-hotel-booking-a2ui) and
+[genkit-hotel-booking-golemui](../genkit-hotel-booking-golemui). Start there to
+read the code of one approach; come here to compare them.
+
+Two tabs, one hotel, one model, one A2UI renderer:
+
+- **A2UI.** The agent writes the forms, the review card and the payment form
+  with the A2UI v0.9 basic catalog (`TextField`, `DateTimeInput`,
+  `ChoicePicker`, `CheckBox`, `Button`…). Then it relays what the guest typed
+  to the hotel API through server tools.
+- **A2UI + GolemUI.** The agent still speaks A2UI, but its catalog adds three
+  components backed by GolemUI and host code:
+  - `ContractForm { operation, fields, prefill }` renders the GolemUI form
+    generated from the OpenAPI, sliced to the asked fields.
+  - `BookingReview { proposal }` shows an editable review with a live price
+    computed by the app. The **app** creates the booking.
+  - `Checkout { bookingId, amount }` is the animated card checkout. The **app**
+    charges the card.
+
+The inspector shows everything that crossed the wire, including the size of
+the A2UI the agent wrote, so the comparison is measurable.
+
+**Built with Genkit · A2UI · Angular · GolemUI**
+
+## What the comparison shows
+
+Measured on the same scenario ("We are 6 people and travel with a baby, need
+parking" → stay → special requests → review → pay), with the scripted mock
+model:
+
+|                               | A2UI | A2UI + GolemUI |
+| ----------------------------- | ---- | -------------- |
+| A2UI written by the agent     | **≈7.2 KB** in 4 surfaces | **≈2.2 KB** in 4 surfaces |
+| First form                    | 2.9 KB: every input, option, check and binding | 0.6 KB: `ContractForm { fields: [...] }` |
+| Validation                    | `checks` per field; no cross-field rules; messages only on TextField and Slider | the contract's validators plus host business rules shown inline (e.g. 9 guests need 3 rooms) |
+| Data back from the form       | the form's own shape (`"guests": "6"`, `"board": ["half"]`, split dates), which the LLM must translate | the API's shape (`{ values }`), passed through unchanged |
+| Price                         | a `quote_booking` server tool; the card can't recompute on edit | computed live in the browser by the same code the server uses |
+| Review                        | read-only card, Confirm / Change | editable form plus a diff of what the human changed |
+| Who calls `POST /bookings`    | the LLM, through a server tool | the app |
+| Changing it before paying     | the LLM composes another form, then calls `update_booking` | `ContractForm { operation: "updateBooking", fields: ["car"] }`, then a review that PATCHes the same booking |
+| Card number                   | sent to the agent in the action context | never leaves the component (brand + last4 only) |
+
+Pure A2UI is great for small, ad-hoc UI. For data entry against a real API
+contract, the GolemUI-backed components keep the form, the validation and the
+money in code, and the agent only decides what to ask.
+
+## Run it
+
+Requires Node 20+.
+
+```bash
+npm install
+cp .env.example .env      # add your ANTHROPIC_API_KEY
+npm run dev               # Genkit server on :8000 + Angular app on http://localhost:4210
+```
+
+No API key, or offline? Run the scripted mock model instead. Only the LLM is
+fake: it writes ```` ```a2ui ```` blocks like a model does, and the real
+`a2ui()` middleware, the Genkit agents and the browser run unchanged.
+
+```bash
+npm run dev:mock
+```
+
+Other commands:
+
+```bash
+npm run forms       # regenerate shared/forms/*.json from the OpenAPI (GolemUI MCP generator)
+npm test            # contract/forms tests + both variants end to end over HTTP
+npm run typecheck   # server tsc + Angular production build
+```
+
+## Changing a booking before paying
+
+The contract has `PATCH /bookings/{bookingId}` (`updateBooking`). It changes
+any booking field while the booking is unpaid, and the server reprices it and
+re-checks availability. Adding it took a contract change and `npm run forms`;
+the UI needed no new form. Close the checkout (the agent then asks whether
+you'd like to change anything), or just write "before paying, I want to rent a
+car". In the GolemUI variant the agent shows a `ContractForm` for
+`updateBooking` with only that field, then a `BookingReview` with the
+`bookingId`, which updates the existing booking instead of creating a second
+one. Writing in the chat freezes any surface that is still open (e.g. the old
+checkout), because it is stale now.
+
+## How it works
+
+```
+shared/                         the hotel contract and everything derived from it
+  src/hotel-api.ts              ★ OpenAPI: createBooking (+ specialRequests), updateBooking, checkAvailability, createPayment
+  src/contract.ts               request schemas and one-line field descriptions, read from the contract
+  forms/*.json                  createBooking + updateBooking, generated by `npm run forms`, checked in
+  src/forms.ts                  slice the generated form to the fields the agent asked for
+  src/pricing.ts                pricing + cross-field rules (server AND browser)
+  src/a2ui.ts                   catalog ids, component and event names (agent ⇄ renderer)
+server/                         Genkit 1.43 (genkit/beta)
+  src/agents.ts                 two defineAgent()s, no store, each with a2ui({ catalog })
+  src/catalogs.ts               what each agent is told it may render
+  src/mock-model.ts             MOCK_AGENT=1: scripted models that write A2UI blocks
+  src/server.ts                 Express: /api/agents/{pure,golem} + the mock hotel API
+app/                            Angular 21, zoneless
+  src/app/agent/                remoteAgent() chat per variant → A2UI envelopes → renderer
+  src/app/hotel/                ContractForm, BookingReview + the hotel AngularCatalog
+  src/app/payment/              Checkout (GolemUI gui.* checkout with custom Angular widgets)
+  src/app/inspector/            the wire: A2UI sizes, actions, server tool calls, API calls
+```
+
+Files that start with an `AUTO-GENERATED from shared/hotel/…` banner are copies
+of the hotel core this demo shares with the other hotel demos of the repo
+(contract, pricing, mock API, form generator). They are complete and work as
+they are; in the repo, they are edited in `shared/hotel/` and copied with
+`npm run sync`.
+
+One turn, end to end:
+
+1. The browser sends the message with `remoteAgent(...).chat().sendStream()`.
+   The agent has no store, so the browser keeps the whole session and sends it
+   on every turn.
+2. The `a2ui()` middleware injects the catalog description into the system
+   prompt, pulls the model's ```` ```a2ui ```` blocks out of its text, validates
+   them against the catalog, and turns them into data parts.
+3. The browser takes the envelopes out of the stream chunks
+   (`a2uiEnvelopesFromParts`) and hands them to `A2uiRendererService`.
+4. A click on a surface fires an A2UI action. The browser sends it back as the
+   next turn (`actionToMessage`), and the middleware summarises it for the model
+   as `[UI action "name" … context={…}]`.
+
+The GolemUI components fire their own actions with
+`surface.dispatchAction({ event: { name, context } })`. The context is sent
+as-is, without data-binding resolution, so the agent gets the validated form
+values in the API's shape.
+
+## Notes for A2UI / Genkit
+
+- **Genkit:** interrupts and the Agents API exist only on `genkit/beta`.
+  `import { genkit } from 'genkit'` leaves them undefined.
+- **Genkit:** the `@genkit-ai/anthropic` plugin throws at startup without a key,
+  so mock mode skips it. It has no headers option. `ANTHROPIC_WORKSPACE_ID` in
+  `.env` is turned into the SDK's `ANTHROPIC_CUSTOM_HEADERS`.
+- **`@genkit-ai/a2ui` 0.6:** its hand-written description of the basic catalog
+  has drifted from the renderer. It advertises `Slider.step` and
+  `List.listStyle`, which web_core's strict schemas reject. Claude used `step`,
+  and the renderer threw away the whole surface ("Unrecognized key(s) in object:
+  'step'"). It also omits `DateTimeInput`, `ChoicePicker` and `checks`. Here the
+  model-facing description is **generated from web_core's own catalog.json**
+  (`server/src/basic-catalog.ts`) and pinned by a test. The `validate` option of
+  the `a2ui()` middleware only checks component names, so bad props reach the
+  browser.
+- **Models copy `version` into the wrong place.** On later turns the model sees
+  its earlier surfaces in the history with the plugin's top-level `version`, and
+  sometimes writes one inside `updateComponents`. The strict renderer rejects
+  that ("Unrecognized key(s) in object: 'version'"). The agents are told never
+  to write `version`, and the app strips a misplaced one before rendering
+  (`shared/src/normalize-envelopes.ts`, tested against web_core).
+- **Renderer errors go back to the agent.** When `processMessages` rejects a
+  surface, the app tells the agent why and asks it to re-render (at most twice
+  per turn). That is A2UI's renderer → agent error path. With the mock, any
+  message mentioning "slider" reproduces the mistake and the repair.
+- **web_core 0.14:** the `numeric` check rejects strings with `EXPRESSION_ERROR`,
+  but a `TextField` (even `variant: number`) stores strings. A `numeric` check
+  on a TextField can never pass, so the mock uses `regex` instead.
+- **`@a2ui/angular` 0.13 (v0_9):** `ChoicePicker` ignores its `label`, and only
+  TextField and Slider show check messages. Disabled buttons use fixed light
+  colors that don't follow the theme.
+- **`@a2ui/angular` 0.13:** requires Angular `^21.2.5`, so this demo isn't on
+  Angular 22. Its `zod` is v3; the app pins `zod@3.25.76` for the component
+  schemas and imports `zod/v4` for the GolemUI card validators.
+
+## Learn more
+
+- [GolemUI docs](https://golemui.com/dx/getting-started/installation/)
+- [A2UI](https://a2ui.org) · [Genkit](https://genkit.dev) · [@genkit-ai/a2ui](https://www.npmjs.com/package/@genkit-ai/a2ui)

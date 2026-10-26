@@ -214,7 +214,7 @@ and the API, the forms and the agent's view stay in sync.
   in prose and a **second LLM** (a subagent) writes the A2UI, with a
   validate-and-retry loop. This demo adds `render_a2ui` and its usage guide
   itself (the package's own exports), so the concierge writes the A2UI, like
-  the pure variant of [genkit-a2ui-hotel-booking](../genkit-a2ui-hotel-booking).
+  the Genkit version, [genkit-hotel-booking-a2ui](../genkit-hotel-booking-a2ui).
 - The middleware turns a UI action into a synthetic `log_a2ui_event` tool call
   in the run's input, on the server only. With the conversation in the browser
   (no thread store), the next run would forget what the guest submitted, so the

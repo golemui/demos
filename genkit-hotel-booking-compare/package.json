@@ -1,0 +1,21 @@
+{
+  "name": "golemui-genkit-hotel-booking-compare",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "app"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,app -c blue,green \"npm run dev --workspace server\" \"npm run start --workspace app\"",
+    "dev:mock": "MOCK_AGENT=1 npm run dev",
+    "forms": "npm run forms --workspace shared",
+    "test": "npm test --workspace shared && npm test --workspace server",
+    "typecheck": "npm run typecheck --workspace server && npm run build --workspace app"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

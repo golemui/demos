@@ -30,7 +30,7 @@ export function variantEvents(variant: Variant, input: RunAgentInput, resourceId
  * middleware's `injectA2UITool` flag: @ag-ui/mastra 2 reads that flag and swaps
  * render_a2ui for `generate_a2ui`, which hands the UI to a second LLM (a
  * subagent writing A2UI from a prose description). Here the concierge writes
- * the A2UI itself, like the pure variant of genkit-a2ui-hotel-booking (in this repo).
+ * the A2UI itself, like the Genkit version (genkit-hotel-booking-a2ui, in this repo).
  */
 function withRenderTool(input: RunAgentInput): RunAgentInput {
   return {

@@ -28,6 +28,10 @@ test('the mock API enforces the contract and business rules', () => {
   assert.equal(service.checkAvailability({ dates: { start: '2099-05-01', end: '2099-05-03' }, rooms: 2 }).available, true);
 
   const booking = service.createBooking({ dates: { start: '2099-06-01', end: '2099-06-03' }, guests: 2, rooms: 1, board: 'none', car: 'none' });
+  const totalBefore = booking.total; // the service hands back the stored object, which PATCH mutates
+  const updated = service.updateBooking(booking.id, { car: 'sport' });
+  assert.equal(updated.id, booking.id, 'PATCH keeps the booking id');
+  assert.equal(updated.total, totalBefore + 2 * 45, 'repriced: a sports car is +€45/night');
   assert.throws(() => service.updateBooking(booking.id, { guests: 9 }), /at least 3 rooms/);
   assert.throws(() => service.updateBooking('AUR-0', { car: 'suv' }), /not found/);
   service.createPayment({ bookingId: booking.id, amount: booking.total, brand: 'visa', last4: '4242' });
